@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node --experimental-modules index.mjs"
   },
   "repository": {
     "type": "git",
@@ -15,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/ronerlih/tensorflow-hand-mirror-node/issues"
   },
-  "homepage": "https://github.com/ronerlih/tensorflow-hand-mirror-node#readme"
+  "homepage": "https://github.com/ronerlih/tensorflow-hand-mirror-node#readme",
+  "dependencies": {
+    "@tensorflow-models/posenet": "^2.2.1",
+    "@tensorflow/tfjs-node": "^2.3.0",
+    "canvas": "^2.6.1"
+  }
 }
