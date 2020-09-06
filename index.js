@@ -16,7 +16,7 @@
  * =============================================================================
  */
 
-import * as handpose from '@tensorflow-models/handpose';
+const handpose = require('@tensorflow-models/handpose');
 
 function isMobile() {
   const isAndroid = /Android/i.test(navigator.userAgent);
