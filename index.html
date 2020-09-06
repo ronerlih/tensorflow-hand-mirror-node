@@ -19,9 +19,10 @@ limitations under the License.
 <script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script>
 <!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
 <style>
+  :root { overflow-x: hidden;}
   #canvas-wrapper {
-    margin: auto;
-    margin-top: 100px;
+    margin: auto ;
+    margin-top: 20px;
     display: block;
     text-align: center;
   }
@@ -30,6 +31,13 @@ limitations under the License.
     vertical-align: top;
   }
   #info { text-align: center;}
+  #output, #scatter-gl-container, #scatter-gl-container > *{
+    width: 100%;
+    max-width: 1280px;
+  }
+  #scatter-gl-container, #scatter-gl-container > * {
+    width:auto!important;
+  }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
 
@@ -40,7 +48,7 @@ limitations under the License.
   </div>
   <div id="predictions"></div>
   <div id="canvas-wrapper">
-    <canvas id="output" style=""></canvas>
+    <canvas id="output" ></canvas>
     <video id="video" playsinline style="
     -webkit-transform: scaleX(-1);
     transform: scaleX(-1);
