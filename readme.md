@@ -1,1 +1,0 @@
-# tensorflow-hand-mirror-node 👋
