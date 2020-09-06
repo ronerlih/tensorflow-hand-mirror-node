@@ -1,6 +1,8 @@
 **push to gh-pages** 
 
+
 ```sh
+yarn build
 git add . && git commit -m "deploy" 
 ```
 
