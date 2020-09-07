@@ -26453,6 +26453,8 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 const infoEl = document.querySelector("#info");
+const inputEl = document.querySelector("#input>img");
+const inputCanvas = document.querySelector("#input-canvas");
 const CONFIDENCE = 0.1;
 let model;
 
@@ -26469,14 +26471,22 @@ async function main() {
     // get prediction
     const predictions = await model.estimateHands(img);
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
-    var context = canvas.getContext('2d');
-    context.drawImage(img, 0, 0);
+    drawToCanvas(canvas, predictions, img);
+  } // get input prediction
 
-    if (predictions.length > 0) {
-      const result = predictions[0].landmarks;
-      (0, _drawing.drawKeypoints)(context, result, predictions[0].annotations);
-      canvas.style.border = "6px solid lightgreen";
-    }
+
+  const predictions = await model.estimateHands(inputEl);
+  drawToCanvas(inputCanvas, predictions);
+}
+
+function drawToCanvas(canvas, predictions, img) {
+  var context = canvas.getContext('2d');
+  if (img) context.drawImage(img, 0, 0);
+
+  if (predictions.length > 0) {
+    const result = predictions[0].landmarks;
+    (0, _drawing.drawKeypoints)(context, result, predictions[0].annotations);
+    canvas.style.border = "6px solid lightgreen";
   }
 }
 
