@@ -1,5 +1,7 @@
 
 import {fingerLookupIndices} from './fingers.js';
+// const COLOR = "lightgreen";
+const COLOR = "black";
 
 export function drawPoint(ctx, y, x, r) {
    ctx.beginPath();
@@ -8,6 +10,9 @@ export function drawPoint(ctx, y, x, r) {
  }
 
 export function drawKeypoints(ctx, keypoints) {
+    ctx.strokeStyle = COLOR;
+    ctx.fillStyle = COLOR;
+    
    const keypointsArray = keypoints;
  
    for (let i = 0; i < keypointsArray.length; i++) {

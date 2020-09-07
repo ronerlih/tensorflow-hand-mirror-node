@@ -112,8 +112,8 @@ const landmarksRealTime = async (video) => {
   video.height = videoHeight;
 
   ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "green";
-  ctx.fillStyle = "green";
+  ctx.strokeStyle = "lightgreen";
+  ctx.fillStyle = "lightgreen";
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);

@@ -12,9 +12,18 @@
          width: 200px;
       }
       canvas, img { border: 6px solid white;}
+      .blink {
+         animation: blinkingText 1.8s infinite ease-in-out;
+      }
+      @keyframes blinkingText{
+         0%{	opacity: 0.2;	}
+         50%{	opacity: 1;	}
+         100%{	opacity: 0.2;	}
+      }
    </style>
 </head>
 <body>
+   <div id="info"></div>
 
    <h4>input image</h4>
    <div id="input">
