@@ -77,7 +77,7 @@ function setupDatGui(state, renderPointcloud) {
 
   // flip horizontally 
   gui.add(state, 'flip')
-  .onChange( flip => {
+    .onChange( flip => {
     state.flip = flip;
   }); 
 
@@ -112,8 +112,8 @@ const landmarksRealTime = async (video) => {
   video.height = videoHeight;
 
   ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "red";
-  ctx.fillStyle = "red";
+  ctx.strokeStyle = "green";
+  ctx.fillStyle = "green";
 
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);

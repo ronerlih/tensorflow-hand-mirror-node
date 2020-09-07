@@ -26643,8 +26643,8 @@ const landmarksRealTime = async video => {
   video.width = videoWidth;
   video.height = videoHeight;
   ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "red";
-  ctx.fillStyle = "red";
+  ctx.strokeStyle = "green";
+  ctx.fillStyle = "green";
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1); // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
