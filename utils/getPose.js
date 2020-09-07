@@ -1,15 +1,11 @@
 import * as handpose from '@tensorflow-models/handpose';
+
+const CONFIDENCE = 0.1;
+
 export default async function getPose(img){
 
    let model;
-   model = await handpose.load();
+   model = await handpose.load({detectionConfidence: CONFIDENCE});
 
-   const predictions = await model.estimateHands(img);
-
-    if (predictions.length > 0) {
-      const result = predictions[0].landmarks;
-      // drawKeypoints(ctx, result, predictions[0].annotations);
-      console.log(predictions[0])
-    }
-
+   return await model.estimateHands(img);
 }
