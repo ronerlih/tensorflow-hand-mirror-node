@@ -26367,319 +26367,49 @@ class HandPose {
 }
 
 exports.HandPose = HandPose;
-},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","@tensorflow/tfjs-converter":"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js"}],"utils/index.js":[function(require,module,exports) {
+},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","@tensorflow/tfjs-converter":"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js"}],"utils/getPose.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.isMobile = isMobile;
-
-function isMobile() {
-  const isAndroid = /Android/i.test(navigator.userAgent);
-  const isiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-  return isAndroid || isiOS;
-}
-},{}],"utils/fingers.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.fingerLookupIndices = void 0;
-const fingerLookupIndices = {
-  thumb: [0, 1, 2, 3, 4],
-  indexFinger: [0, 5, 6, 7, 8],
-  middleFinger: [0, 9, 10, 11, 12],
-  ringFinger: [0, 13, 14, 15, 16],
-  pinky: [0, 17, 18, 19, 20]
-}; // for rendering each finger as a polyline
-
-exports.fingerLookupIndices = fingerLookupIndices;
-},{}],"utils/drawing.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.drawPoint = drawPoint;
-exports.drawKeypoints = drawKeypoints;
-exports.drawPath = drawPath;
-
-var _fingers = require("./fingers.js");
-
-function drawPoint(ctx, y, x, r) {
-  ctx.beginPath();
-  ctx.arc(x, y, r, 0, 2 * Math.PI);
-  ctx.fill();
-}
-
-function drawKeypoints(ctx, keypoints) {
-  const keypointsArray = keypoints;
-
-  for (let i = 0; i < keypointsArray.length; i++) {
-    const y = keypointsArray[i][0];
-    const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, 3);
-  }
-
-  const fingers = Object.keys(_fingers.fingerLookupIndices);
-
-  for (let i = 0; i < fingers.length; i++) {
-    const finger = fingers[i];
-
-    const points = _fingers.fingerLookupIndices[finger].map(idx => keypoints[idx]);
-
-    drawPath(ctx, points, false);
-  }
-}
-
-function drawPath(ctx, points, closePath) {
-  const region = new Path2D();
-  region.moveTo(points[0][0], points[0][1]);
-
-  for (let i = 1; i < points.length; i++) {
-    const point = points[i];
-    region.lineTo(point[0], point[1]);
-  }
-
-  if (closePath) {
-    region.closePath();
-  }
-
-  ctx.stroke(region);
-}
-},{"./fingers.js":"utils/fingers.js"}],"utils/video.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.setupCamera = setupCamera;
-exports.loadVideo = loadVideo;
-exports.VIDEO_HEIGHT = exports.VIDEO_WIDTH = void 0;
-const VIDEO_WIDTH = 1280;
-exports.VIDEO_WIDTH = VIDEO_WIDTH;
-const VIDEO_HEIGHT = 720; // used in index.js to resize hand
-
-exports.VIDEO_HEIGHT = VIDEO_HEIGHT;
-
-async function setupCamera(mobile) {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    throw new Error('Browser API navigator.mediaDevices.getUserMedia not available');
-  }
-
-  const video = document.getElementById('video');
-  const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
-    'video': {
-      facingMode: 'user',
-      // Only setting the video to a specified size in order to accommodate a
-      // point cloud, so on mobile devices accept the default size.
-      width: mobile ? undefined : VIDEO_WIDTH // height: mobile ? undefined : VIDEO_HEIGHT * 2
-
-    }
-  });
-  video.srcObject = stream;
-  return new Promise(resolve => {
-    video.onloadedmetadata = () => {
-      resolve(video);
-    };
-  });
-}
-
-async function loadVideo(mobile) {
-  const video = await setupCamera(mobile);
-  video.play();
-  return video;
-}
-},{}],"utils/drawCloud.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.drawPointCloud = drawPointCloud;
-
-var _fingers = require("./fingers");
-
-var _video = require("./video");
-
-let scatterGLHasInitialized = false;
-
-function drawPointCloud(result, scatterGL) {
-  const ANCHOR_POINTS = [[0, 0, 0], [0, -_video.VIDEO_HEIGHT, 0], [-_video.VIDEO_WIDTH, 0, 0], [-_video.VIDEO_WIDTH, -_video.VIDEO_HEIGHT, 0]];
-  const pointsData = result.map(point => {
-    return [-point[0], -point[1], -point[2]];
-  });
-  const dataset = new ScatterGL.Dataset([...pointsData, ...ANCHOR_POINTS]);
-
-  if (!scatterGLHasInitialized) {
-    scatterGL.render(dataset);
-    const fingers = Object.keys(_fingers.fingerLookupIndices);
-    scatterGL.setSequences(fingers.map(finger => ({
-      indices: _fingers.fingerLookupIndices[finger]
-    })));
-    scatterGL.setPointColorer(index => {
-      if (index < pointsData.length) {
-        return 'steelblue';
-      }
-
-      return 'white'; // Hide.
-    });
-  } else {
-    scatterGL.updateDataset(dataset);
-  }
-
-  scatterGLHasInitialized = true;
-}
-},{"./fingers":"utils/fingers.js","./video":"utils/video.js"}],"index.js":[function(require,module,exports) {
-"use strict";
+exports.default = void 0;
 
 var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
-
-var utils = _interopRequireWildcard(require("./utils"));
-
-var _drawing = require("./utils/drawing.js");
-
-var _video = require("./utils/video.js");
-
-var _drawCloud = require("./utils/drawCloud");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-/* eslint-disable */
+var getPose = async function getPose(img) {
+  let model;
+  model = await handpose.load();
+  const predictions = await model.estimateHands(img);
 
-/**
- * @license
- * Copyright 2020 Google LLC. All Rights Reserved.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * https://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- * =============================================================================
- */
-let videoWidth, videoHeight, scatterGL;
-const VIDEO_WIDTH = 1280;
-const VIDEO_HEIGHT = 720;
-const mobile = utils.isMobile(); // Don't render the point cloud on mobile in order to maximize performance and
-// to avoid crowding limited screen space.
+  if (predictions.length > 0) {
+    const result = predictions[0].landmarks; // drawKeypoints(ctx, result, predictions[0].annotations);
 
-let renderPointcloud = mobile === false;
-const state = {};
-state.confidence = 0.5;
-state.flip = false;
-
-if (renderPointcloud) {
-  state.renderPointcloud = false;
-}
-
-let model;
-
-const main = async () => {
-  model = await handpose.load({
-    detectionConfidence: state.confidence
-  });
-  let video;
-
-  try {
-    video = await (0, _video.loadVideo)(mobile);
-  } catch (e) {
-    noCameraMessage(e);
-  }
-
-  landmarksRealTime(video);
-};
-
-function noCameraMessage(e) {
-  let info = document.getElementById('info');
-  info.textContent = e.message;
-  info.style.display = 'block';
-  throw e;
-}
-
-function setupDatGui(state, renderPointcloud) {
-  const gui = new dat.GUI();
-
-  if (renderPointcloud) {
-    gui.add(state, 'renderPointcloud').onChange(render => {
-      document.querySelector('#scatter-gl-container').style.display = render ? 'inline-block' : 'none';
-    });
-  } // flip horizontally 
-
-
-  gui.add(state, 'flip').onChange(flip => {
-    state.flip = flip;
-  }); //confidence bar
-
-  gui.add(state, 'confidence', 0, 1).onChange(async sliderValue => {
-    state.confidence = sliderValue;
-    model = await handpose.load({
-      detectionConfidence: state.confidence
-    });
-  });
-}
-
-const landmarksRealTime = async video => {
-  setupDatGui(state, renderPointcloud);
-  const stats = new Stats();
-  stats.showPanel(0);
-  document.body.appendChild(stats.dom);
-  videoWidth = video.videoWidth;
-  videoHeight = video.videoHeight;
-  const canvas = document.getElementById('output');
-  canvas.width = videoWidth;
-  canvas.height = videoHeight;
-  const ctx = canvas.getContext('2d');
-  video.width = videoWidth;
-  video.height = videoHeight;
-  ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "green";
-  ctx.fillStyle = "green";
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1); // These anchor points allow the hand pointcloud to resize according to its
-  // position in the input.
-
-  async function frameLandmarks() {
-    stats.begin();
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    const predictions = await model.estimateHands(video, state.flip);
-
-    if (predictions.length > 0) {
-      const result = predictions[0].landmarks;
-      (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations);
-
-      if (renderPointcloud === true && scatterGL != null && state.renderPointcloud) {
-        (0, _drawCloud.drawPointCloud)(result, scatterGL);
-      }
-    }
-
-    stats.end();
-    requestAnimationFrame(frameLandmarks);
-  }
-
-  ;
-  frameLandmarks();
-
-  if (renderPointcloud) {
-    document.querySelector('#scatter-gl-container').style = "width: ".concat(VIDEO_WIDTH, "px; height: ").concat(VIDEO_HEIGHT, "px;");
-    scatterGL = new ScatterGL(document.querySelector('#scatter-gl-container'), {
-      'rotateOnStart': false,
-      'selectEnabled': false
-    });
+    console.log(predictions[0]);
   }
 };
 
-navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+exports.default = getPose;
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js"}],"sandbox.js":[function(require,module,exports) {
+"use strict";
+
+var _getPose = _interopRequireDefault(require("./utils/getPose.js"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function main() {
+  const images = document.querySelector('#images').children;
+  console.log(images);
+
+  for (let img of images) {
+    (0, _getPose.default)(img);
+  }
+}
+
 main();
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/drawCloud":"utils/drawCloud.js"}]},{},["index.js"], null)
-//# sourceMappingURL=/tensorflow-hand-mirror-node.e31bb0bc.js.map
+},{"./utils/getPose.js":"utils/getPose.js"}]},{},["sandbox.js"], null)
+//# sourceMappingURL=/sandbox.8649dcbf.js.map
