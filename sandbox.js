@@ -2,6 +2,8 @@ import * as handpose from '@tensorflow-models/handpose';
 import { drawKeypoints } from './utils/drawing.js';
 
 const infoEl = document.querySelector("#info");
+const inputEl = document.querySelector("#input>img");
+const inputCanvas = document.querySelector("#input-canvas");
 
 const CONFIDENCE = 0.1;
 let model;
@@ -19,17 +21,27 @@ async function main(){
 
       // get prediction
       const predictions = await model.estimateHands(img);
-      
       const canvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
-      var context = canvas.getContext('2d');
+      
+      drawToCanvas(canvas, predictions, img);
+
+   }
+
+   // get input prediction
+   const predictions = await model.estimateHands(inputEl);
+   drawToCanvas(inputCanvas, predictions);
+}
+
+function drawToCanvas(canvas, predictions, img) {
+   var context = canvas.getContext('2d');
+   
+   if (img)
       context.drawImage(img, 0, 0 );
 
-      if (predictions.length > 0) {
-        const result = predictions[0].landmarks;
-        drawKeypoints(context, result, predictions[0].annotations);
-        canvas.style.border = "6px solid lightgreen";
-      }
-
+   if (predictions.length > 0) {
+     const result = predictions[0].landmarks;
+     drawKeypoints(context, result, predictions[0].annotations);
+     canvas.style.border = "6px solid lightgreen";
    }
 }
 

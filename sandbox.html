@@ -11,7 +11,15 @@
       #images img{
          width: 200px;
       }
-      canvas, img { border: 6px solid white;}
+      
+      canvas, img, :not(#input-canvas), :not(#input) { border: 6px solid white;}
+      
+      #input {
+         position: relative;
+      }
+      #input-canvas {
+         position: absolute;
+      }
       .blink {
          animation: blinkingText 1.8s infinite ease-in-out;
       }
@@ -27,6 +35,9 @@
 
    <h4>input image</h4>
    <div id="input">
+      <canvas width="1080" height="720" id="input-canvas" ></canvas>
+      <img src="./data/input.jpg" alt="">
+   </div>
    
    <h4>data images poses</h4>
    <div id="results">
