@@ -26367,32 +26367,7 @@ class HandPose {
 }
 
 exports.HandPose = HandPose;
-},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","@tensorflow/tfjs-converter":"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js"}],"utils/getPose.js":[function(require,module,exports) {
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.default = void 0;
-
-var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
-
-function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-const CONFIDENCE = 0.1;
-
-var getPose = async function getPose(img) {
-  let model;
-  model = await handpose.load({
-    detectionConfidence: CONFIDENCE
-  });
-  return await model.estimateHands(img);
-};
-
-exports.default = getPose;
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js"}],"utils/fingers.js":[function(require,module,exports) {
+},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","@tensorflow/tfjs-converter":"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js"}],"utils/fingers.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -26420,6 +26395,9 @@ exports.drawPath = drawPath;
 
 var _fingers = require("./fingers.js");
 
+// const COLOR = "lightgreen";
+const COLOR = "black";
+
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -26427,6 +26405,8 @@ function drawPoint(ctx, y, x, r) {
 }
 
 function drawKeypoints(ctx, keypoints) {
+  ctx.strokeStyle = COLOR;
+  ctx.fillStyle = COLOR;
   const keypointsArray = keypoints;
 
   for (let i = 0; i < keypointsArray.length; i++) {
@@ -26464,22 +26444,33 @@ function drawPath(ctx, points, closePath) {
 },{"./fingers.js":"utils/fingers.js"}],"sandbox.js":[function(require,module,exports) {
 "use strict";
 
-var _getPose = _interopRequireDefault(require("./utils/getPose.js"));
+var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
 
 var _drawing = require("./utils/drawing.js");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+const infoEl = document.querySelector("#info");
+const CONFIDENCE = 0.1;
+let model;
 
 async function main() {
+  infoEl.innerHTML = "loading hand pose model<span class='blink'>..</span>";
+  model = await handpose.load({
+    detectionConfidence: CONFIDENCE
+  });
+  infoEl.textContent = null;
   const images = document.querySelector('#images').children;
 
   for (let img of images) {
     // get canvas and draw src img
+    // get prediction
+    const predictions = await model.estimateHands(img);
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
     var context = canvas.getContext('2d');
-    context.drawImage(img, 0, 0); // get prediction
-
-    const predictions = await (0, _getPose.default)(img);
+    context.drawImage(img, 0, 0);
 
     if (predictions.length > 0) {
       const result = predictions[0].landmarks;
@@ -26490,5 +26481,5 @@ async function main() {
 }
 
 main();
-},{"./utils/getPose.js":"utils/getPose.js","./utils/drawing.js":"utils/drawing.js"}]},{},["sandbox.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js"}]},{},["sandbox.js"], null)
 //# sourceMappingURL=/sandbox.8649dcbf.js.map

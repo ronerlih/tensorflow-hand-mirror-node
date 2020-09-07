@@ -26408,6 +26408,9 @@ exports.drawPath = drawPath;
 
 var _fingers = require("./fingers.js");
 
+// const COLOR = "lightgreen";
+const COLOR = "black";
+
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -26415,6 +26418,8 @@ function drawPoint(ctx, y, x, r) {
 }
 
 function drawKeypoints(ctx, keypoints) {
+  ctx.strokeStyle = COLOR;
+  ctx.fillStyle = COLOR;
   const keypointsArray = keypoints;
 
   for (let i = 0; i < keypointsArray.length; i++) {
@@ -26643,8 +26648,8 @@ const landmarksRealTime = async video => {
   video.width = videoWidth;
   video.height = videoHeight;
   ctx.clearRect(0, 0, videoWidth, videoHeight);
-  ctx.strokeStyle = "green";
-  ctx.fillStyle = "green";
+  ctx.strokeStyle = "lightgreen";
+  ctx.fillStyle = "lightgreen";
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1); // These anchor points allow the hand pointcloud to resize according to its
   // position in the input.
