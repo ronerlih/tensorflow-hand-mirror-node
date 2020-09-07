@@ -26381,35 +26381,114 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
+const CONFIDENCE = 0.1;
+
 var getPose = async function getPose(img) {
   let model;
-  model = await handpose.load();
-  const predictions = await model.estimateHands(img);
-
-  if (predictions.length > 0) {
-    const result = predictions[0].landmarks; // drawKeypoints(ctx, result, predictions[0].annotations);
-
-    console.log(predictions[0]);
-  }
+  model = await handpose.load({
+    detectionConfidence: CONFIDENCE
+  });
+  return await model.estimateHands(img);
 };
 
 exports.default = getPose;
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js"}],"sandbox.js":[function(require,module,exports) {
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js"}],"utils/fingers.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.fingerLookupIndices = void 0;
+const fingerLookupIndices = {
+  thumb: [0, 1, 2, 3, 4],
+  indexFinger: [0, 5, 6, 7, 8],
+  middleFinger: [0, 9, 10, 11, 12],
+  ringFinger: [0, 13, 14, 15, 16],
+  pinky: [0, 17, 18, 19, 20]
+}; // for rendering each finger as a polyline
+
+exports.fingerLookupIndices = fingerLookupIndices;
+},{}],"utils/drawing.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.drawPoint = drawPoint;
+exports.drawKeypoints = drawKeypoints;
+exports.drawPath = drawPath;
+
+var _fingers = require("./fingers.js");
+
+function drawPoint(ctx, y, x, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function drawKeypoints(ctx, keypoints) {
+  const keypointsArray = keypoints;
+
+  for (let i = 0; i < keypointsArray.length; i++) {
+    const y = keypointsArray[i][0];
+    const x = keypointsArray[i][1];
+    drawPoint(ctx, x - 2, y - 2, 3);
+  }
+
+  const fingers = Object.keys(_fingers.fingerLookupIndices);
+
+  for (let i = 0; i < fingers.length; i++) {
+    const finger = fingers[i];
+
+    const points = _fingers.fingerLookupIndices[finger].map(idx => keypoints[idx]);
+
+    drawPath(ctx, points, false);
+  }
+}
+
+function drawPath(ctx, points, closePath) {
+  const region = new Path2D();
+  region.moveTo(points[0][0], points[0][1]);
+
+  for (let i = 1; i < points.length; i++) {
+    const point = points[i];
+    region.lineTo(point[0], point[1]);
+  }
+
+  if (closePath) {
+    region.closePath();
+  }
+
+  ctx.stroke(region);
+}
+},{"./fingers.js":"utils/fingers.js"}],"sandbox.js":[function(require,module,exports) {
 "use strict";
 
 var _getPose = _interopRequireDefault(require("./utils/getPose.js"));
 
+var _drawing = require("./utils/drawing.js");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function main() {
+async function main() {
   const images = document.querySelector('#images').children;
-  console.log(images);
 
   for (let img of images) {
-    (0, _getPose.default)(img);
+    // get canvas and draw src img
+    const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
+    var context = canvas.getContext('2d');
+    context.drawImage(img, 0, 0); // get prediction
+
+    const predictions = await (0, _getPose.default)(img);
+
+    if (predictions.length > 0) {
+      const result = predictions[0].landmarks;
+      (0, _drawing.drawKeypoints)(context, result, predictions[0].annotations);
+      canvas.style.border = "6px solid lightgreen";
+    }
   }
 }
 
 main();
-},{"./utils/getPose.js":"utils/getPose.js"}]},{},["sandbox.js"], null)
+},{"./utils/getPose.js":"utils/getPose.js","./utils/drawing.js":"utils/drawing.js"}]},{},["sandbox.js"], null)
 //# sourceMappingURL=/sandbox.8649dcbf.js.map
