@@ -16,6 +16,7 @@
     "@tensorflow/tfjs-converter": "^1.7.0",
     "@tensorflow/tfjs-core": "^1.7.0",
     "compute-cosine-similarity": "^1.0.0",
+    "opencv4nodejs": "^5.6.0",
     "vptree": "^1.0.0"
   },
   "scripts": {
