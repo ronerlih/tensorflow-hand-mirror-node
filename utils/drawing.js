@@ -9,6 +9,13 @@ export function drawPoint(ctx, y, x, r) {
    ctx.fill();
  }
 
+ export function drawPointAnnotation(ctx, y, x, r, text, color) {
+   ctx.font = '14px sans-serif;';
+   ctx.fillText(text, x + 10, y);
+   ctx.beginPath();
+   ctx.arc(x, y, r, 0, 2 * Math.PI);
+   ctx.fill();
+ }
 export function drawKeypoints(ctx, keypoints) {
     ctx.strokeStyle = COLOR;
     ctx.fillStyle = COLOR;

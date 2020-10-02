@@ -1,6 +1,6 @@
 import * as handpose from '@tensorflow-models/handpose';
 // import { cropAndResize } from '@tensorflow/tfjs-core/dist/ops/image_ops';
-import { drawKeypoints } from './utils/drawing.js';
+import { drawKeypoints, drawPointAnnotation } from './utils/drawing.js';
 import findSimilar from './utils/findSimilar.js';
 import l2norm from 'compute-l2norm';
 
@@ -29,7 +29,7 @@ async function main(){
    await drawOnInputImage();
 
    // console.log(inputPose)
-   // console.log(poseData)
+   console.log(poseData)
 
    // find similar
    // const similarIndex = await findSimilar(inputPose, poseData);
@@ -46,20 +46,50 @@ async function main(){
 async function drawOnInputImage(){
 
    const predictions = await getPrediction(inputEl);
-   inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose));
+   inputPose = mapLandmarks(predictions[0].landmarks)
+
+   // draw dots
+   predictions[0].landmarks.map((position, i) => {
+      drawPointAnnotation(inputCanvas.getContext('2d'), position[1],position[0], 5 , i)
+   })
+
    // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
    drawToCanvas(inputCanvas, predictions);
+
    // return currentPose;
+}
+function mapLandmarks(landmarks) {
+   
+   // only flat
+   // return landmarks.flat();
+
+   //  2norm and flat
+   // return landmarks.map(xyzPose => l2norm(xyzPose)).flat();
+   
+   // only 2norm
+   // return landmarks.map(xyzPose => l2norm(xyzPose));
+
+      // only 2d
+      return landmarks.map(pos => [pos[0], pos[1]]).flat();
+
+
+
 }
 
 async function drawOnDatasetImages(){
-   for(let img of images){
+   for(let [i, img] of [...images].entries()){
 
       // get prediction
       const predictions = await getPrediction(img);
       
+      // debug
+      if(i == 0) {
+         console.log(img);
+         console.log(predictions[0]);
+      }
+
       if(predictions[0] && predictions[0].landmarks) 
-         poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)));
+         poseData.push(mapLandmarks(predictions[0].landmarks));
          // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
       
       // get canvas and draw
@@ -115,6 +145,10 @@ function drawToCanvas(canvas, predictions, img) {
      drawKeypoints(context, result, predictions[0].annotations);
      canvas.style.border = "6px solid lightgreen";
    }
+}
+function drawPoint(canvas, position, color) {
+   var context = canvas.getContext('2d');
+
 }
 
 // draw from canvas context

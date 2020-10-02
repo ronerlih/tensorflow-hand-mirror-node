@@ -26044,6 +26044,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.drawPoint = drawPoint;
+exports.drawPointAnnotation = drawPointAnnotation;
 exports.drawKeypoints = drawKeypoints;
 exports.drawPath = drawPath;
 
@@ -26053,6 +26054,14 @@ var _fingers = require("./fingers.js");
 const COLOR = "black";
 
 function drawPoint(ctx, y, x, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function drawPointAnnotation(ctx, y, x, r, text, color) {
+  ctx.font = '14px sans-serif;';
+  ctx.fillText(text, x + 10, y);
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
   ctx.fill();
@@ -26878,8 +26887,8 @@ async function main() {
   await drawOnDatasetImages(); // estimate and draw on input img
 
   await drawOnInputImage(); // console.log(inputPose)
-  // console.log(poseData)
-  // find similar
+
+  console.log(poseData); // find similar
   // const similarIndex = await findSimilar(inputPose, poseData);
 
   const similarIndexOrder = await (0, _findSimilar.default)(inputPose, poseData);
@@ -26890,16 +26899,37 @@ async function main() {
 
 async function drawOnInputImage() {
   const predictions = await getPrediction(inputEl);
-  inputPose = predictions[0].landmarks.map(xyzPose => (0, _computeL2norm.default)(xyzPose)); // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
+  inputPose = mapLandmarks(predictions[0].landmarks); // draw dots
+
+  predictions[0].landmarks.map((position, i) => {
+    (0, _drawing.drawPointAnnotation)(inputCanvas.getContext('2d'), position[1], position[0], 5, i);
+  }); // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
 
   drawToCanvas(inputCanvas, predictions); // return currentPose;
 }
 
+function mapLandmarks(landmarks) {
+  // only flat
+  // return landmarks.flat();
+  //  2norm and flat
+  // return landmarks.map(xyzPose => l2norm(xyzPose)).flat();
+  // only 2norm
+  // return landmarks.map(xyzPose => l2norm(xyzPose));
+  // only 2d
+  return landmarks.map(pos => [pos[0], pos[1]]).flat();
+}
+
 async function drawOnDatasetImages() {
-  for (let img of images) {
+  for (let [i, img] of [...images].entries()) {
     // get prediction
-    const predictions = await getPrediction(img);
-    if (predictions[0] && predictions[0].landmarks) poseData.push(predictions[0].landmarks.map(xyzPose => (0, _computeL2norm.default)(xyzPose))); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
+    const predictions = await getPrediction(img); // debug
+
+    if (i == 0) {
+      console.log(img);
+      console.log(predictions[0]);
+    }
+
+    if (predictions[0] && predictions[0].landmarks) poseData.push(mapLandmarks(predictions[0].landmarks)); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
     // get canvas and draw
 
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
@@ -26950,6 +26980,10 @@ function drawToCanvas(canvas, predictions, img) {
     (0, _drawing.drawKeypoints)(context, result, predictions[0].annotations);
     canvas.style.border = "6px solid lightgreen";
   }
+}
+
+function drawPoint(canvas, position, color) {
+  var context = canvas.getContext('2d');
 } // draw from canvas context
 
 
