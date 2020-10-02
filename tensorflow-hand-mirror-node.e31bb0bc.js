@@ -26057,6 +26057,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.drawPoint = drawPoint;
+exports.drawPointAnnotation = drawPointAnnotation;
 exports.drawKeypoints = drawKeypoints;
 exports.drawPath = drawPath;
 
@@ -26066,6 +26067,14 @@ var _fingers = require("./fingers.js");
 const COLOR = "black";
 
 function drawPoint(ctx, y, x, r) {
+  ctx.beginPath();
+  ctx.arc(x, y, r, 0, 2 * Math.PI);
+  ctx.fill();
+}
+
+function drawPointAnnotation(ctx, y, x, r, text, color) {
+  ctx.font = '14px sans-serif;';
+  ctx.fillText(text, x + 10, y);
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
   ctx.fill();
