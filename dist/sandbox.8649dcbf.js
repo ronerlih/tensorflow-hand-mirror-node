@@ -26816,20 +26816,31 @@ function findSimilar(currentUserPose, poseData) {
 
   function findMostSimilarMatch(userPose) {
     // search the vp tree for the image pose that is nearest (in cosine distance) to userPose
-    let nearestImage = vptree.search(userPose);
+    let nearestImage = vptree.search(userPose, 10);
     console.log(nearestImage[0].d); // cosine distance value of the nearest match
     // return index (in relation to poseData) of nearest match. 
 
     return nearestImage[0].i;
+  }
+
+  function findMostSimilarTenMatches(userPose) {
+    // search the vp tree for the image pose that is nearest (in cosine distance) to userPose
+    let nearestImages = vptree.search(userPose, 10);
+    console.log(poseData[nearestImages[0].i]); // cosine distance value of the nearest match
+    // return index (in relation to poseData) of nearest match. 
+
+    return nearestImages.map(img => img.i);
   } // Build the tree once
 
 
   buildVPTree(); // Then for each input user pose
   // let currentUserPose = [...] // an L2 normalized vector representing a user pose. 34-float array (17 keypoints x 2).  
+  // let closestMatchIndex = findMostSimilarMatch(currentUserPose);
 
-  let closestMatchIndex = findMostSimilarMatch(currentUserPose);
-  let closestMatch = poseData[closestMatchIndex];
-  console.log(closestMatch);
+  let closestMatchIndex = findMostSimilarTenMatches(currentUserPose); // let closestMatch = poseData[closestMatchIndex];
+  // console.log(closestMatch);
+
+  return closestMatchIndex;
 }
 },{"compute-cosine-similarity":"node_modules/compute-cosine-similarity/lib/index.js","vptree":"node_modules/vptree/vptree.js"}],"sandbox.js":[function(require,module,exports) {
 "use strict";
@@ -26839,6 +26850,8 @@ var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
 var _drawing = require("./utils/drawing.js");
 
 var _findSimilar = _interopRequireDefault(require("./utils/findSimilar.js"));
+
+var _computeL2norm = _interopRequireDefault(require("compute-l2norm"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -26851,24 +26864,34 @@ const infoEl = document.querySelector("#info");
 const inputEl = document.querySelector("#input>img");
 const images = document.querySelector('#images').children;
 const inputCanvas = document.querySelector("#input-canvas");
-const CONFIDENCE = 0.1;
+const sortedCanvas = document.querySelector("#sorted-results").children;
+const CONFIDENCE = 0.01;
 let model;
 const poseData = [];
 let inputPose;
+let confirmedCanvases = [];
 
 async function main() {
   // load handpose ts model from local storage or library
   await loadModel(); // estimate and draw on source images
 
-  drawOnDatasetImages(); // estimate and draw on input img
+  await drawOnDatasetImages(); // estimate and draw on input img
 
-  drawOnInputImage(); // find similar
-  // findSimilar(inputPose, poseData);
+  await drawOnInputImage(); // console.log(inputPose)
+  // console.log(poseData)
+  // find similar
+  // const similarIndex = await findSimilar(inputPose, poseData);
+
+  const similarIndexOrder = await (0, _findSimilar.default)(inputPose, poseData);
+  similarIndexOrder.map(i => confirmedCanvases[i]) // .map( canvas => console.log(canvas))
+  .forEach((canvas, i) => copyImgFromCanvasToCanvas(canvas, sortedCanvas[i], [0, 0], [300, 300]));
+  console.log(similarIndexOrder);
 }
 
 async function drawOnInputImage() {
   const predictions = await getPrediction(inputEl);
-  inputPose = predictions[0];
+  inputPose = predictions[0].landmarks.map(xyzPose => (0, _computeL2norm.default)(xyzPose)); // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
+
   drawToCanvas(inputCanvas, predictions); // return currentPose;
 }
 
@@ -26876,29 +26899,32 @@ async function drawOnDatasetImages() {
   for (let img of images) {
     // get prediction
     const predictions = await getPrediction(img);
-    poseData.push(predictions[0]); // get canvas and draw
+    if (predictions[0] && predictions[0].landmarks) poseData.push(predictions[0].landmarks.map(xyzPose => (0, _computeL2norm.default)(xyzPose))); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
+    // get canvas and draw
 
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
     drawToCanvas(canvas, predictions, img);
 
     if (predictions[0]) {
+      confirmedCanvases.push(canvas);
       handFoundPipeline(predictions, img);
     }
   }
+
+  return;
 }
 
 async function handFoundPipeline(predictions, img) {
-  cropAndResize(predictions, img);
+  return cropAndResize(predictions, img);
 }
 
 async function cropAndResize(predictions, img) {
   // get cannvases
   const newCanvas = document.querySelector("#resized-".concat(img.getAttribute('id')));
   const originCanvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
-  console.log(predictions);
   const boundingBox = predictions[0].boundingBox;
   copyImgFromCanvasToCanvas(originCanvas, newCanvas, boundingBox.topLeft, boundingBox.bottomRight);
-  console.log(newCanvas);
+  return predictions, newCanvas;
 }
 
 async function loadModel() {
@@ -26940,5 +26966,5 @@ function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight) {
 
 
 main();
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js","./utils/findSimilar.js":"utils/findSimilar.js"}]},{},["sandbox.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js","./utils/findSimilar.js":"utils/findSimilar.js","compute-l2norm":"node_modules/compute-l2norm/lib/index.js"}]},{},["sandbox.js"], null)
 //# sourceMappingURL=/sandbox.8649dcbf.js.map

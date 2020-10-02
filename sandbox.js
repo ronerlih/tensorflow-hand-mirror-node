@@ -2,16 +2,20 @@ import * as handpose from '@tensorflow-models/handpose';
 // import { cropAndResize } from '@tensorflow/tfjs-core/dist/ops/image_ops';
 import { drawKeypoints } from './utils/drawing.js';
 import findSimilar from './utils/findSimilar.js';
+import l2norm from 'compute-l2norm';
 
 const infoEl = document.querySelector("#info");
 const inputEl = document.querySelector("#input>img");
 const images = document.querySelector('#images').children;
 const inputCanvas = document.querySelector("#input-canvas");
+const sortedCanvas = document.querySelector("#sorted-results").children;
 
-const CONFIDENCE = 0.1;
+
+const CONFIDENCE = 0.01;
 let model;
 const poseData = [];
 let inputPose;
+let confirmedCanvases = [];
 
 async function main(){
 
@@ -19,19 +23,31 @@ async function main(){
    await loadModel();
 
    // estimate and draw on source images
-   drawOnDatasetImages()
+   await drawOnDatasetImages()
 
    // estimate and draw on input img
-   drawOnInputImage();
+   await drawOnInputImage();
+
+   // console.log(inputPose)
+   // console.log(poseData)
 
    // find similar
-   // findSimilar(inputPose, poseData);
+   // const similarIndex = await findSimilar(inputPose, poseData);
+   const similarIndexOrder = await findSimilar(inputPose, poseData);
+
+   similarIndexOrder
+      .map( i => confirmedCanvases[i])
+      // .map( canvas => console.log(canvas))
+      .forEach((canvas, i) => copyImgFromCanvasToCanvas(canvas,sortedCanvas[i],[0, 0],[300, 300]));
+
+   console.log(similarIndexOrder)
 }
 
 async function drawOnInputImage(){
 
    const predictions = await getPrediction(inputEl);
-   inputPose = predictions[0];
+   inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose));
+   // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
    drawToCanvas(inputCanvas, predictions);
    // return currentPose;
 }
@@ -42,32 +58,36 @@ async function drawOnDatasetImages(){
       // get prediction
       const predictions = await getPrediction(img);
       
-
-      poseData.push(predictions[0])
+      if(predictions[0] && predictions[0].landmarks) 
+         poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)));
+         // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
       
       // get canvas and draw
       const canvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
+
       drawToCanvas(canvas, predictions, img);
 
       if (predictions[0]) {
+         confirmedCanvases.push(canvas);
          handFoundPipeline(predictions, img)
        }
    }
+   return 
 }
 async function handFoundPipeline(predictions, img){
 
-   cropAndResize(predictions, img);
+   return cropAndResize(predictions, img);
    
 }
 async function cropAndResize(predictions, img){
    // get cannvases
    const newCanvas = document.querySelector(`#resized-${img.getAttribute('id')}`);
    const originCanvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
-   console.log(predictions)
    const boundingBox = predictions[0].boundingBox;
    copyImgFromCanvasToCanvas(originCanvas, newCanvas, boundingBox.topLeft, boundingBox.bottomRight)
    
-   console.log(newCanvas)
+   return (predictions, newCanvas)
+    
 }
 async function loadModel() {
    infoEl.innerHTML = "loading hand pose model<span class='blink'>..</span>";
