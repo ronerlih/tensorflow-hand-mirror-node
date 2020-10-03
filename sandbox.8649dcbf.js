@@ -26834,8 +26834,7 @@ function findSimilar(currentUserPose, poseData) {
 
   function findMostSimilarTenMatches(userPose) {
     // search the vp tree for the image pose that is nearest (in cosine distance) to userPose
-    let nearestImages = vptree.search(userPose, 10);
-    console.log(poseData[nearestImages[0].i]); // cosine distance value of the nearest match
+    let nearestImages = vptree.search(userPose, 10); // console.log(poseData[nearestImages[0].i]) // cosine distance value of the nearest match
     // return index (in relation to poseData) of nearest match. 
 
     return nearestImages.map(img => img.i);
@@ -26887,25 +26886,42 @@ async function main() {
   await drawOnDatasetImages(); // estimate and draw on input img
 
   await drawOnInputImage(); // console.log(inputPose)
-
-  console.log(poseData); // find similar
+  // console.log(poseData)
+  // find similar
   // const similarIndex = await findSimilar(inputPose, poseData);
 
-  const similarIndexOrder = await (0, _findSimilar.default)(inputPose, poseData);
+  const similarIndexOrder = await (0, _findSimilar.default)(mapLandmarks(inputPose), poseData.map(mapLandmarks));
+  const inputBone = [inputPose[0], inputPose[17]];
+  const matchBone = [poseData[similarIndexOrder[0]][0], poseData[similarIndexOrder[0]][17]];
   similarIndexOrder.map(i => confirmedCanvases[i]) // .map( canvas => console.log(canvas))
-  .forEach((canvas, i) => copyImgFromCanvasToCanvas(canvas, sortedCanvas[i], [0, 0], [300, 300]));
-  console.log(similarIndexOrder);
+  .map((canvas, i) => {
+    copyImgFromCanvasToCanvas(canvas, sortedCanvas[i], [0, 0], [300, 300]);
+    return canvas;
+  });
+  const angel = getAngle(inputBone, matchBone);
+  sortedCanvas[0].style = "transform: rotate(".concat(angel, "rad);");
+  console.log(sortedCanvas[0].style); // console.log(similarIndexOrder)
 }
 
 async function drawOnInputImage() {
   const predictions = await getPrediction(inputEl);
-  inputPose = mapLandmarks(predictions[0].landmarks); // draw dots
+  inputPose = predictions[0].landmarks; // draw dots
 
   predictions[0].landmarks.map((position, i) => {
     (0, _drawing.drawPointAnnotation)(inputCanvas.getContext('2d'), position[1], position[0], 5, i);
   }); // inputPose = predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat();
 
   drawToCanvas(inputCanvas, predictions); // return currentPose;
+}
+
+function getAngle(inputBone, matchBone) {
+  console.log(inputBone);
+  console.log(matchBone);
+  const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0];
+  const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0];
+  const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + matchSlope * matchSlope)); // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
+
+  return angel;
 }
 
 function mapLandmarks(landmarks) {
@@ -26923,13 +26939,12 @@ async function drawOnDatasetImages() {
   for (let [i, img] of [...images].entries()) {
     // get prediction
     const predictions = await getPrediction(img); // debug
+    // if(i == 0) {
+    //    console.log(img);
+    //    console.log(predictions[0]);
+    // }
 
-    if (i == 0) {
-      console.log(img);
-      console.log(predictions[0]);
-    }
-
-    if (predictions[0] && predictions[0].landmarks) poseData.push(mapLandmarks(predictions[0].landmarks)); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
+    if (predictions[0] && predictions[0].landmarks) poseData.push(predictions[0].landmarks); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
     // get canvas and draw
 
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
