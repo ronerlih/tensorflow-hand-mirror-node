@@ -31,7 +31,7 @@ export default function findSimilar (currentUserPose, poseData) {
       // search the vp tree for the image pose that is nearest (in cosine distance) to userPose
       let nearestImages = vptree.search(userPose, 10);
       
-      console.log(poseData[nearestImages[0].i]) // cosine distance value of the nearest match
+      // console.log(poseData[nearestImages[0].i]) // cosine distance value of the nearest match
     
       // return index (in relation to poseData) of nearest match. 
       return nearestImages.map( img => img.i ); 

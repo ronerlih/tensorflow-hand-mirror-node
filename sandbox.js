@@ -25,28 +25,43 @@ async function main(){
    // estimate and draw on source images
    await drawOnDatasetImages()
 
+   
    // estimate and draw on input img
    await drawOnInputImage();
 
    // console.log(inputPose)
-   console.log(poseData)
+   // console.log(poseData)
 
    // find similar
    // const similarIndex = await findSimilar(inputPose, poseData);
-   const similarIndexOrder = await findSimilar(inputPose, poseData);
+   const similarIndexOrder = await findSimilar(mapLandmarks(inputPose), poseData.map(mapLandmarks));
+   
+   const inputBone = [inputPose[0], inputPose[17]]
+   const matchBone = [poseData[similarIndexOrder[0]][0], poseData[similarIndexOrder[0]][17]]
+
 
    similarIndexOrder
       .map( i => confirmedCanvases[i])
       // .map( canvas => console.log(canvas))
-      .forEach((canvas, i) => copyImgFromCanvasToCanvas(canvas,sortedCanvas[i],[0, 0],[300, 300]));
+      .map((canvas, i) => {
+         copyImgFromCanvasToCanvas(canvas,sortedCanvas[i],[0, 0],[300, 300]);
+         return canvas;
+      });
 
-   console.log(similarIndexOrder)
+   const angel = getAngle(inputBone, matchBone);
+   sortedCanvas[0].style= `transform: rotate(${angel}rad);`
+   console.log(sortedCanvas[0].style)
+
+
+
+
+   // console.log(similarIndexOrder)
 }
 
 async function drawOnInputImage(){
 
    const predictions = await getPrediction(inputEl);
-   inputPose = mapLandmarks(predictions[0].landmarks)
+   inputPose = predictions[0].landmarks
 
    // draw dots
    predictions[0].landmarks.map((position, i) => {
@@ -57,6 +72,18 @@ async function drawOnInputImage(){
    drawToCanvas(inputCanvas, predictions);
 
    // return currentPose;
+}
+
+function getAngle(inputBone, matchBone) {
+
+   console.log(inputBone)
+   console.log(matchBone)
+   const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0]
+   const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0]
+   const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
+
+   // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
+   return angel 
 }
 function mapLandmarks(landmarks) {
    
@@ -83,13 +110,13 @@ async function drawOnDatasetImages(){
       const predictions = await getPrediction(img);
       
       // debug
-      if(i == 0) {
-         console.log(img);
-         console.log(predictions[0]);
-      }
+      // if(i == 0) {
+      //    console.log(img);
+      //    console.log(predictions[0]);
+      // }
 
       if(predictions[0] && predictions[0].landmarks) 
-         poseData.push(mapLandmarks(predictions[0].landmarks));
+         poseData.push(predictions[0].landmarks);
          // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
       
       // get canvas and draw
