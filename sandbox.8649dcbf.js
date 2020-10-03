@@ -26953,15 +26953,11 @@ async function drawOnInputImage() {
 }
 
 function getAngle(inputBone, matchBone) {
-  const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0];
-  const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0]; // const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
-
+  // const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
   const dAx = inputBone[1][0] - inputBone[0][0];
   const dAy = inputBone[1][1] - inputBone[0][1];
   const dBx = matchBone[1][0] - matchBone[0][0];
-  const dBy = matchBone[1][1] - matchBone[0][1]; // const angel = Math.PI - Math.abs(Math.atan(inputSlope) - Math.atan(matchSlope))
-  // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
-
+  const dBy = matchBone[1][1] - matchBone[0][1];
   let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
 
   if (angle < 0) {
