@@ -3,6 +3,7 @@ import * as handpose from '@tensorflow-models/handpose';
 import { drawKeypoints, drawPointAnnotation } from './utils/drawing.js';
 import findSimilar from './utils/findSimilar.js';
 import l2norm from 'compute-l2norm';
+// import { drawMatches } from 'opencv4nodejs';
 
 const infoEl = document.querySelector("#info");
 const inputEl = document.querySelector("#input>img");
@@ -25,7 +26,6 @@ async function main(){
    // estimate and draw on source images
    await drawOnDatasetImages()
 
-   
    // estimate and draw on input img
    await drawOnInputImage();
 
@@ -34,34 +34,68 @@ async function main(){
 
    // find similar
    // const similarIndex = await findSimilar(inputPose, poseData);
-   const similarIndexOrder = await findSimilar(mapLandmarks(inputPose), poseData.map(mapLandmarks));
    
-   const inputBone = [inputPose[0], inputPose[17]]
-   const matchBone = [poseData[similarIndexOrder[0]][0], poseData[similarIndexOrder[0]][17]]
+   const similarIndexOrder = await findSimilar(mapLandmarks(inputPose.landmarks), poseData.map(pred => mapLandmarks(pred.landmarks)));
+   
 
+   const inputBone = [inputPose.landmarks[0], inputPose.landmarks[17]]
+   const matchBone = [poseData[similarIndexOrder[0]].landmarks[0], poseData[similarIndexOrder[0]].landmarks[17]]
 
-   similarIndexOrder
-      .map( i => confirmedCanvases[i])
-      // .map( canvas => console.log(canvas))
-      .map((canvas, i) => {
-         copyImgFromCanvasToCanvas(canvas,sortedCanvas[i],[0, 0],[300, 300]);
-         return canvas;
-      });
-
-   const angel = getAngle(inputBone, matchBone);
-   sortedCanvas[0].style= `transform: rotate(${angel}rad);`
-   console.log(sortedCanvas[0].style)
-
-
-
+   drawCanvasMatches(similarIndexOrder);
+   
+   transformDataImageInRelationToInput(inputBone,matchBone, poseData[similarIndexOrder[0]])
 
    // console.log(similarIndexOrder)
 }
 
+function drawCanvasMatches(similarIndexOrder){
+
+   similarIndexOrder
+   .map( i => confirmedCanvases[i])
+   // .map( canvas => console.log(canvas))
+   .map((canvas, i) => {
+      
+      copyImgFromCanvasToCanvas(canvas,sortedCanvas[i],canvas.boundingBox.topLeft, canvas.boundingBox.bottomRight);
+      return canvas;
+   });
+
+}
+function transformDataImageInRelationToInput(inputBone, matchBone, matchPose){
+
+   // get angel
+   const angel = getAngle(inputBone, matchBone);
+   
+   // get img data
+   const matchCtx = sortedCanvas[0].getContext('2d');
+   let [sx, sy] = matchPose.boundingBox.topLeft;
+   let [ex, ey] = matchPose.boundingBox.bottomRight;
+
+   
+   sx = sx.minMax(0, 300);
+   sy = sy.minMax( 0, 300);
+   ex = ex.minMax( 0, 300);
+   ey = ey.minMax( 0, 300);
+   const imgData = matchCtx.getImageData(sx, sy, ex - sx , ey - sy);
+   // const imgData = matchCtx.getImageData(0,0,300,300);
+
+   // rotate closest match
+   sortedCanvas[0].style= `transform: rotate(${angel}rad);`;
+   
+   const inputCtx = inputCanvas.getContext('2d');
+   inputCtx.rotate(angel)
+   inputCtx.globalAlpha = 0.7;
+
+   
+   inputCtx.drawImage(sortedCanvas[0],0,0);
+   // inputCtx.rotate(-Math.PI / 2)
+   
+   
+   console.log(matchPose)
+}
 async function drawOnInputImage(){
 
    const predictions = await getPrediction(inputEl);
-   inputPose = predictions[0].landmarks
+   inputPose = predictions[0]
 
    // draw dots
    predictions[0].landmarks.map((position, i) => {
@@ -76,8 +110,6 @@ async function drawOnInputImage(){
 
 function getAngle(inputBone, matchBone) {
 
-   console.log(inputBone)
-   console.log(matchBone)
    const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0]
    const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0]
    const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
@@ -116,7 +148,10 @@ async function drawOnDatasetImages(){
       // }
 
       if(predictions[0] && predictions[0].landmarks) 
-         poseData.push(predictions[0].landmarks);
+         {
+            poseData.push(predictions[0]);
+            img.setAttribute("data-confirmed-id", i);
+         }
          // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
       
       // get canvas and draw
@@ -125,6 +160,7 @@ async function drawOnDatasetImages(){
       drawToCanvas(canvas, predictions, img);
 
       if (predictions[0]) {
+         canvas.boundingBox =  predictions[0].boundingBox
          confirmedCanvases.push(canvas);
          handFoundPipeline(predictions, img)
        }
@@ -141,6 +177,7 @@ async function cropAndResize(predictions, img){
    const newCanvas = document.querySelector(`#resized-${img.getAttribute('id')}`);
    const originCanvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
    const boundingBox = predictions[0].boundingBox;
+   // console.log(boundingBox)
    copyImgFromCanvasToCanvas(originCanvas, newCanvas, boundingBox.topLeft, boundingBox.bottomRight)
    
    return (predictions, newCanvas)
@@ -180,14 +217,18 @@ function drawPoint(canvas, position, color) {
 
 // draw from canvas context
 function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight){
+   
    var originContext = canvasA.getContext('2d');
    var newContext = canvasB.getContext('2d');
 
    let [sx, sy] = topLeft;
    let [ex, ey] = bottomRight;
+   const wx = ex - sx 
+   const wy = ey - sy 
+
    // get img data
-   const imgData = originContext.getImageData(sx, sy, ex, ey);
-   newContext.putImageData(imgData,sx,sy);
+   const imgData = originContext.getImageData(sx, sy, wx, wy);
+   newContext.putImageData(imgData, sx, sy);
    canvasB.style.border = "6px solid lightgreen";
 
 
@@ -195,3 +236,7 @@ function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight){
 
 // 🚀
 main();
+
+Number.prototype.minMax = function(min, max) {
+   return Math.min(Math.max(this, min), max)
+}
