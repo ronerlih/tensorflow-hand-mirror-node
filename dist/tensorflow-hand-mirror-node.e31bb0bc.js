@@ -26065,6 +26065,7 @@ var _fingers = require("./fingers.js");
 
 // const COLOR = "lightgreen";
 const COLOR = "black";
+const HIGHLIGHT_COLOR = "blue";
 
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
@@ -26086,6 +26087,14 @@ function drawKeypoints(ctx, keypoints) {
   const keypointsArray = keypoints;
 
   for (let i = 0; i < keypointsArray.length; i++) {
+    if (i === 0 || i === 17) {
+      ctx.strokeStyle = HIGHLIGHT_COLOR;
+      ctx.fillStyle = HIGHLIGHT_COLOR;
+    } else {
+      ctx.strokeStyle = COLOR;
+      ctx.fillStyle = COLOR;
+    }
+
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
     drawPoint(ctx, x - 2, y - 2, 3);

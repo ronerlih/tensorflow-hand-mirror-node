@@ -26052,6 +26052,7 @@ var _fingers = require("./fingers.js");
 
 // const COLOR = "lightgreen";
 const COLOR = "black";
+const HIGHLIGHT_COLOR = "blue";
 
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
@@ -26073,6 +26074,14 @@ function drawKeypoints(ctx, keypoints) {
   const keypointsArray = keypoints;
 
   for (let i = 0; i < keypointsArray.length; i++) {
+    if (i === 0 || i === 17) {
+      ctx.strokeStyle = HIGHLIGHT_COLOR;
+      ctx.fillStyle = HIGHLIGHT_COLOR;
+    } else {
+      ctx.strokeStyle = COLOR;
+      ctx.fillStyle = COLOR;
+    }
+
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
     drawPoint(ctx, x - 2, y - 2, 3);
@@ -26919,11 +26928,14 @@ function transformDataImageInRelationToInput(inputBone, matchBone, matchPose) {
   ey = ey.minMax(0, 300);
   const imgData = matchCtx.getImageData(sx, sy, ex - sx, ey - sy); // const imgData = matchCtx.getImageData(0,0,300,300);
   // rotate closest match
+  // sortedCanvas[0].style= `transform: rotate(1rad);`;
 
   sortedCanvas[0].style = "transform: rotate(".concat(angel, "rad);");
   const inputCtx = inputCanvas.getContext('2d');
+  inputCtx.scale(2, 2);
+  inputCtx.translate(252, -88);
   inputCtx.rotate(angel);
-  inputCtx.globalAlpha = 0.7;
+  inputCtx.globalAlpha = 0.75;
   inputCtx.drawImage(sortedCanvas[0], 0, 0); // inputCtx.rotate(-Math.PI / 2)
 
   console.log(matchPose);
@@ -26942,10 +26954,21 @@ async function drawOnInputImage() {
 
 function getAngle(inputBone, matchBone) {
   const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0];
-  const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0];
-  const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + matchSlope * matchSlope)); // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
+  const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0]; // const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
 
-  return angel;
+  const dAx = inputBone[1][0] - inputBone[0][0];
+  const dAy = inputBone[1][1] - inputBone[0][1];
+  const dBx = matchBone[1][0] - matchBone[0][0];
+  const dBy = matchBone[1][1] - matchBone[0][1]; // const angel = Math.PI - Math.abs(Math.atan(inputSlope) - Math.atan(matchSlope))
+  // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
+
+  let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
+
+  if (angle < 0) {
+    angle = angle * -1;
+  }
+
+  return angle;
 }
 
 function mapLandmarks(landmarks) {
