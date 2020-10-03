@@ -26868,6 +26868,7 @@ function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 // import { cropAndResize } from '@tensorflow/tfjs-core/dist/ops/image_ops';
+// import { drawMatches } from 'opencv4nodejs';
 const infoEl = document.querySelector("#info");
 const inputEl = document.querySelector("#input>img");
 const images = document.querySelector('#images').children;
@@ -26890,22 +26891,47 @@ async function main() {
   // find similar
   // const similarIndex = await findSimilar(inputPose, poseData);
 
-  const similarIndexOrder = await (0, _findSimilar.default)(mapLandmarks(inputPose), poseData.map(mapLandmarks));
-  const inputBone = [inputPose[0], inputPose[17]];
-  const matchBone = [poseData[similarIndexOrder[0]][0], poseData[similarIndexOrder[0]][17]];
+  const similarIndexOrder = await (0, _findSimilar.default)(mapLandmarks(inputPose.landmarks), poseData.map(pred => mapLandmarks(pred.landmarks)));
+  const inputBone = [inputPose.landmarks[0], inputPose.landmarks[17]];
+  const matchBone = [poseData[similarIndexOrder[0]].landmarks[0], poseData[similarIndexOrder[0]].landmarks[17]];
+  drawCanvasMatches(similarIndexOrder);
+  transformDataImageInRelationToInput(inputBone, matchBone, poseData[similarIndexOrder[0]]); // console.log(similarIndexOrder)
+}
+
+function drawCanvasMatches(similarIndexOrder) {
   similarIndexOrder.map(i => confirmedCanvases[i]) // .map( canvas => console.log(canvas))
   .map((canvas, i) => {
-    copyImgFromCanvasToCanvas(canvas, sortedCanvas[i], [0, 0], [300, 300]);
+    copyImgFromCanvasToCanvas(canvas, sortedCanvas[i], canvas.boundingBox.topLeft, canvas.boundingBox.bottomRight);
     return canvas;
   });
-  const angel = getAngle(inputBone, matchBone);
+}
+
+function transformDataImageInRelationToInput(inputBone, matchBone, matchPose) {
+  // get angel
+  const angel = getAngle(inputBone, matchBone); // get img data
+
+  const matchCtx = sortedCanvas[0].getContext('2d');
+  let [sx, sy] = matchPose.boundingBox.topLeft;
+  let [ex, ey] = matchPose.boundingBox.bottomRight;
+  sx = sx.minMax(0, 300);
+  sy = sy.minMax(0, 300);
+  ex = ex.minMax(0, 300);
+  ey = ey.minMax(0, 300);
+  const imgData = matchCtx.getImageData(sx, sy, ex - sx, ey - sy); // const imgData = matchCtx.getImageData(0,0,300,300);
+  // rotate closest match
+
   sortedCanvas[0].style = "transform: rotate(".concat(angel, "rad);");
-  console.log(sortedCanvas[0].style); // console.log(similarIndexOrder)
+  const inputCtx = inputCanvas.getContext('2d');
+  inputCtx.rotate(angel);
+  inputCtx.globalAlpha = 0.7;
+  inputCtx.drawImage(sortedCanvas[0], 0, 0); // inputCtx.rotate(-Math.PI / 2)
+
+  console.log(matchPose);
 }
 
 async function drawOnInputImage() {
   const predictions = await getPrediction(inputEl);
-  inputPose = predictions[0].landmarks; // draw dots
+  inputPose = predictions[0]; // draw dots
 
   predictions[0].landmarks.map((position, i) => {
     (0, _drawing.drawPointAnnotation)(inputCanvas.getContext('2d'), position[1], position[0], 5, i);
@@ -26915,8 +26941,6 @@ async function drawOnInputImage() {
 }
 
 function getAngle(inputBone, matchBone) {
-  console.log(inputBone);
-  console.log(matchBone);
   const inputSlope = inputBone[0][1] - inputBone[1][1] / inputBone[0][0] - inputBone[1][0];
   const matchSlope = matchBone[0][1] - matchBone[1][1] / matchBone[0][0] - matchBone[1][0];
   const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + matchSlope * matchSlope)); // const angle = atan2(vector2.y, vector2.x) - atan2(inputBone[1], inputBone[0]);
@@ -26944,13 +26968,18 @@ async function drawOnDatasetImages() {
     //    console.log(predictions[0]);
     // }
 
-    if (predictions[0] && predictions[0].landmarks) poseData.push(predictions[0].landmarks); // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
+    if (predictions[0] && predictions[0].landmarks) {
+      poseData.push(predictions[0]);
+      img.setAttribute("data-confirmed-id", i);
+    } // poseData.push(predictions[0].landmarks.map(xyzPose => l2norm(xyzPose)).flat())
     // get canvas and draw
+
 
     const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
     drawToCanvas(canvas, predictions, img);
 
     if (predictions[0]) {
+      canvas.boundingBox = predictions[0].boundingBox;
       confirmedCanvases.push(canvas);
       handFoundPipeline(predictions, img);
     }
@@ -26967,7 +26996,8 @@ async function cropAndResize(predictions, img) {
   // get cannvases
   const newCanvas = document.querySelector("#resized-".concat(img.getAttribute('id')));
   const originCanvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
-  const boundingBox = predictions[0].boundingBox;
+  const boundingBox = predictions[0].boundingBox; // console.log(boundingBox)
+
   copyImgFromCanvasToCanvas(originCanvas, newCanvas, boundingBox.topLeft, boundingBox.bottomRight);
   return predictions, newCanvas;
 }
@@ -27006,14 +27036,20 @@ function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight) {
   var originContext = canvasA.getContext('2d');
   var newContext = canvasB.getContext('2d');
   let [sx, sy] = topLeft;
-  let [ex, ey] = bottomRight; // get img data
+  let [ex, ey] = bottomRight;
+  const wx = ex - sx;
+  const wy = ey - sy; // get img data
 
-  const imgData = originContext.getImageData(sx, sy, ex, ey);
+  const imgData = originContext.getImageData(sx, sy, wx, wy);
   newContext.putImageData(imgData, sx, sy);
   canvasB.style.border = "6px solid lightgreen";
 } // 🚀
 
 
 main();
+
+Number.prototype.minMax = function (min, max) {
+  return Math.min(Math.max(this, min), max);
+};
 },{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js","./utils/findSimilar.js":"utils/findSimilar.js","compute-l2norm":"node_modules/compute-l2norm/lib/index.js"}]},{},["sandbox.js"], null)
 //# sourceMappingURL=/sandbox.8649dcbf.js.map
