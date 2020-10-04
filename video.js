@@ -64,6 +64,10 @@ function noCameraMessage(e) {
 function setupDatGui(state) {
    const gui = new dat.GUI();
    state.opacity = 1;
+   state.addHands = false;
+   state.sourceRatio = 0.3;
+   state.drawHandPose = true;
+
 
 	// flip horizontally
 	gui.add(state, "flip").onChange((flip) => {
@@ -80,6 +84,18 @@ function setupDatGui(state) {
 	gui.add(state, "opacity", 0, 1).onChange((sliderValue) => {
 		state.opacity = sliderValue;
       if (globalCtx) globalCtx.globalAlpha = sliderValue;
+   });
+   // add hand
+	gui.add(state, "addHands").onChange((flip) => {
+		state.addHands = flip;
+   });
+    // source image ratio diffrence
+	gui.add(state, "sourceRatio", 0, 5).onChange((sliderValue) => {
+		state.ratio = sliderValue;
+   });
+    // source image ratio diffrence
+	gui.add(state, "drawHandPose").onChange((val) => {
+		state.drawHandPose = val;
 	});
 }
 const landmarksRealTime = async (video) => {
@@ -119,12 +135,14 @@ const landmarksRealTime = async (video) => {
 		const predictions = await model.estimateHands(video, state.flip);
 
 		if (predictions.length > 0) {
-			const result = predictions[0].landmarks;
-			drawKeypoints(ctx, result, predictions[0].annotations);
+         const result = predictions[0].landmarks;
+         if( state.drawHandPose)
+			   drawKeypoints(ctx, result, predictions[0].annotations);
          
          // overlay hand image
          const matchIndex = findSimilar(mapLandmarks(predictions[0].landmarks));
-         await placeImage(ctx, predictions[0], matchIndex);
+         if (state.addHands)
+            await placeImage(ctx, predictions[0], matchIndex, state.sourceRatio);
 
       }
 		stats.end();

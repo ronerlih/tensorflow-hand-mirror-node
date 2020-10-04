@@ -99,21 +99,33 @@ function getAngle(inputBone, matchBone) {
    if(angle < 0) {angle = angle * -1;}
    return angle 
 }
-export async function placeImage(ctx, prediction, matchIndex){
+export async function placeImage(ctx, prediction, matchIndex, sourceRatio){
 
    const userBone = [prediction.landmarks[0], prediction.landmarks[17]]
    const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].landmarks[17]]
 
    const angel = getAngle(userBone, matchBone);
+   
+   const translateX = prediction.landmarks[0][0] 
+   const translateY = prediction.landmarks[0][1] - poseData[matchIndex][1].landmarks[0][1]
    // ctx.scale(2, 2);
-   ctx.translate(252, -88)
-   ctx.rotate(angel)
-   ctx.globalAlpha = 0.75;
-   ctx.drawImage(poseData[matchIndex][0],0,0);
-   ctx.rotate(-angel)
-   // ctx.scale(1, 1);
-   ctx.translate(-252, 88)
+   const imageDiff = sourceRatio;
+   const magnitudeUser = Math.sqrt(
+        Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0],2)
+      + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1],2))
+   
+   const magnitudeMatch = Math.sqrt(
+        Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0],2)
+      + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1],2))
 
+   const ratio = magnitudeUser / magnitudeMatch 
+   ctx.translate(translateX, translateY)
+   ctx.rotate(angel)
+   // ctx.globalAlpha = 0.65;
+   ctx.drawImage(poseData[matchIndex][0],0,0,poseData[matchIndex][0].width * ratio * imageDiff,poseData[matchIndex][0].height * ratio * imageDiff );
+   ctx.rotate(-angel)
+
+   // ctx.scale(1, 1);
+   ctx.translate(-translateX, -translateY)
    return;
 }
- 
