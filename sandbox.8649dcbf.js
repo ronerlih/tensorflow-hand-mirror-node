@@ -26921,14 +26921,7 @@ function transformDataImageInRelationToInput(inputBone, matchBone, matchPose) {
   // get angel
   const angel = getAngle(inputBone, matchBone); // get img data
 
-  const matchCtx = sortedCanvas[0].getContext('2d');
-  let [sx, sy] = matchPose.boundingBox.topLeft;
-  let [ex, ey] = matchPose.boundingBox.bottomRight;
-  sx = sx.minMax(0, 300);
-  sy = sy.minMax(0, 300);
-  ex = ex.minMax(0, 300);
-  ey = ey.minMax(0, 300);
-  const imgData = matchCtx.getImageData(sx, sy, ex - sx, ey - sy); // const imgData = matchCtx.getImageData(0,0,300,300);
+  const matchCtx = sortedCanvas[0].getContext('2d'); // const imgData = matchCtx.getImageData(0,0,300,300);
   // rotate closest match
   // sortedCanvas[0].style= `transform: rotate(1rad);`;
 
