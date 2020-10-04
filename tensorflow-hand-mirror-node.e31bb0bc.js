@@ -26066,6 +26066,8 @@ var _fingers = require("./fingers.js");
 // const COLOR = "lightgreen";
 const COLOR = "black";
 const HIGHLIGHT_COLOR = "blue";
+const POINT_SIZE = 3;
+const HIGHLIGHT_POINT_SIZE = 6;
 
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
@@ -26097,7 +26099,7 @@ function drawKeypoints(ctx, keypoints) {
 
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, 3);
+    drawPoint(ctx, x - 2, y - 2, i === 0 || i === 17 ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
   }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
