@@ -2,6 +2,7 @@ import { drawKeypoints } from './drawing.js';
 import { findSimilar, buildVPTree } from './findSimilarVideo';
 
 let normalisedPoses = [];
+const poseData = [];
 
 export async function buildImagesData(model) {
 
@@ -18,7 +19,6 @@ export async function findMatch (lookupPose) {
 }
 
 async function normaliseImages(images, model){
-   const poseData = [];
    
    for(let [i, img] of [...images].entries()){
 
@@ -99,3 +99,21 @@ function getAngle(inputBone, matchBone) {
    if(angle < 0) {angle = angle * -1;}
    return angle 
 }
+export async function placeImage(ctx, prediction, matchIndex){
+
+   const userBone = [prediction.landmarks[0], prediction.landmarks[17]]
+   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].landmarks[17]]
+
+   const angel = getAngle(userBone, matchBone);
+   // ctx.scale(2, 2);
+   ctx.translate(252, -88)
+   ctx.rotate(angel)
+   ctx.globalAlpha = 0.75;
+   ctx.drawImage(poseData[matchIndex][0],0,0);
+   ctx.rotate(-angel)
+   // ctx.scale(1, 1);
+   ctx.translate(-252, 88)
+
+   return;
+}
+ 

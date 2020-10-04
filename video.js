@@ -20,7 +20,7 @@ import * as handpose from "@tensorflow-models/handpose";
 import * as utils from "./utils";
 import { drawKeypoints } from "./utils/drawing.js";
 import { loadVideo } from "./utils/video.js";
-import { buildImagesData,  mapLandmarks } from "./utils/imagesData";
+import { buildImagesData,  mapLandmarks, placeImage } from "./utils/imagesData";
 import { findSimilar } from "./utils/findSimilarVideo";
 
 let videoWidth, videoHeight;
@@ -123,8 +123,10 @@ const landmarksRealTime = async (video) => {
 			drawKeypoints(ctx, result, predictions[0].annotations);
          
          // overlay hand image
-         console.log(findSimilar(mapLandmarks(predictions[0].landmarks)))
-		}
+         const matchIndex = findSimilar(mapLandmarks(predictions[0].landmarks));
+         await placeImage(ctx, predictions[0], matchIndex);
+
+      }
 		stats.end();
 		requestAnimationFrame(frameLandmarks);
 	}
