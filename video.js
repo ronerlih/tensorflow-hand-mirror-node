@@ -20,7 +20,8 @@ import * as handpose from "@tensorflow-models/handpose";
 import * as utils from "./utils";
 import { drawKeypoints } from "./utils/drawing.js";
 import { loadVideo } from "./utils/video.js";
-import { buildImagesData } from "./utils/imagesData";
+import { buildImagesData,  mapLandmarks } from "./utils/imagesData";
+import { findSimilar } from "./utils/findSimilarVideo";
 
 let videoWidth, videoHeight;
 const VIDEO_WIDTH = 640;
@@ -34,6 +35,8 @@ state.flip = false;
 
 let model;
 let imagesAndPoses;
+let globalCtx;
+
 const main = async () => {
 	model = await handpose.load({ detectionConfidence: state.confidence });
    
@@ -59,7 +62,8 @@ function noCameraMessage(e) {
 }
 
 function setupDatGui(state) {
-	const gui = new dat.GUI();
+   const gui = new dat.GUI();
+   state.opacity = 1;
 
 	// flip horizontally
 	gui.add(state, "flip").onChange((flip) => {
@@ -70,6 +74,12 @@ function setupDatGui(state) {
 	gui.add(state, "confidence", 0, 1).onChange(async (sliderValue) => {
 		state.confidence = sliderValue;
 		model = await handpose.load({ detectionConfidence: state.confidence });
+   });
+   
+   	//global alpha
+	gui.add(state, "opacity", 0, 1).onChange((sliderValue) => {
+		state.opacity = sliderValue;
+      if (globalCtx) globalCtx.globalAlpha = sliderValue;
 	});
 }
 const landmarksRealTime = async (video) => {
@@ -78,7 +88,7 @@ const landmarksRealTime = async (video) => {
 
    // stats (frame rate)
 	const stats = new Stats();
-	stats.showPanel(0);
+	stats.showPanel(1);
 	document.body.appendChild(stats.dom);
 
 	videoWidth = video.videoWidth;
@@ -90,6 +100,7 @@ const landmarksRealTime = async (video) => {
 	canvas.height = videoHeight;
 
 	const ctx = canvas.getContext("2d");
+   globalCtx = ctx;
 
 	video.width = videoWidth;
 	video.height = videoHeight;
@@ -98,11 +109,9 @@ const landmarksRealTime = async (video) => {
 	// ctx.strokeStyle = "lightgreen";
 	// ctx.fillStyle = "lightgreen";
 
-	// ctx.translate(canvas.width, 0);
-	// ctx.scale(-1, 1);
-
-	// These anchor points allow the hand pointcloud to resize according to its
-	// position in the input.
+	ctx.translate(canvas.width, 0);
+	ctx.scale(-1, 1);
+   // console.log(imagesAndPoses)
 
 	async function frameLandmarks() {
       stats.begin();
@@ -112,8 +121,9 @@ const landmarksRealTime = async (video) => {
 		if (predictions.length > 0) {
 			const result = predictions[0].landmarks;
 			drawKeypoints(ctx, result, predictions[0].annotations);
-
-			
+         
+         // overlay hand image
+         console.log(findSimilar(mapLandmarks(predictions[0].landmarks)))
 		}
 		stats.end();
 		requestAnimationFrame(frameLandmarks);

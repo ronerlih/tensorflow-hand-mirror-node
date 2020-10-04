@@ -11,4 +11,5 @@ export default function setupDatGui(state, renderPointcloud) {
    gui.add(state, 'confidence', 0, 1).onChange(res => {
       console.log(res);
     });
+    
  }

@@ -1,12 +1,20 @@
 import { drawKeypoints } from './drawing.js';
+import { findSimilar, buildVPTree } from './findSimilarVideo';
+
+let normalisedPoses = [];
 
 export async function buildImagesData(model) {
 
    const images = document.querySelector('#images').children;
-   const imagesAndPoses = await normaliseImages(images, model)
-
+   const imagesAndPoses = await normaliseImages(images, model);
+   buildVPTree(normalisedPoses);
 
    return imagesAndPoses;
+}
+
+export async function findMatch (lookupPose) {
+   const similarIndexOrder = await findSimilar(lookupPose);
+   return similarIndexOrder
 }
 
 async function normaliseImages(images, model){
@@ -18,7 +26,7 @@ async function normaliseImages(images, model){
 		const predictions = await model.estimateHands(img);
 
       if(predictions[0] && predictions[0].landmarks) {
-         
+         normalisedPoses.push(mapLandmarks(predictions[0].landmarks))
          poseData.push([img, predictions[0]]);
 
          // draw to canvas
@@ -72,4 +80,22 @@ function drawToCanvas(canvas, predictions, img) {
 
      context.stroke();
    }
+}
+
+export function mapLandmarks(landmarks) {
+   
+      return landmarks.map(pos => [pos[0], pos[1]]).flat();
+}
+
+function getAngle(inputBone, matchBone) {
+
+   // const angel = Math.tan(Math.abs(matchSlope - inputSlope / 1 + (matchSlope * matchSlope)))
+   const dAx = inputBone[1][0] - inputBone[0][0];
+   const dAy = inputBone[1][1] - inputBone[0][1];
+   const dBx = matchBone[1][0] - matchBone[0][0];
+   const dBy = matchBone[1][1] - matchBone[0][1];
+   
+   let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
+   if(angle < 0) {angle = angle * -1;}
+   return angle 
 }
