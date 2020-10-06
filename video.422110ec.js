@@ -26088,8 +26088,10 @@ function drawKeypoints(ctx, keypoints) {
   ctx.fillStyle = COLOR;
   const keypointsArray = keypoints;
 
+  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
+
   for (let i = 0; i < keypointsArray.length; i++) {
-    if (i === 0 || i === 17) {
+    if (pointFilter(i)) {
       ctx.strokeStyle = HIGHLIGHT_COLOR;
       ctx.fillStyle = HIGHLIGHT_COLOR;
     } else {
@@ -26099,7 +26101,8 @@ function drawKeypoints(ctx, keypoints) {
 
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, i === 0 || i === 17 ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPoint(ctx, x, y, pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPointAnnotation(ctx, x, y, 0, i);
   }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
@@ -26919,6 +26922,7 @@ exports.buildImagesData = buildImagesData;
 exports.findMatch = findMatch;
 exports.mapLandmarks = mapLandmarks;
 exports.placeImage = placeImage;
+exports.getCentroid = getCentroid;
 
 var _drawing = require("./drawing.js");
 
@@ -26945,12 +26949,17 @@ async function normaliseImages(images, model) {
     const predictions = await model.estimateHands(img);
 
     if (predictions[0] && predictions[0].landmarks) {
+      const centroid = getCentroid(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
       normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
-      poseData.push([img, predictions[0]]); // draw to canvas
+      predictions[0].centroid = centroid; // draw to canvas
       // get canvas and draw
 
       const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
-      drawToCanvas(canvas, predictions, img); // canvas.boundingBox =  predictions[0].boundingBox
+      poseData.push([canvas, predictions[0]]);
+      const context = canvas.getContext('2d');
+      drawToCanvas(canvas, predictions, img);
+      (0, _drawing.drawPoint)(context, centroid[1], centroid[0], 4);
+      (0, _drawing.drawPath)(context, [predictions[0].landmarks[0], centroid], false); // canvas.boundingBox =  predictions[0].boundingBox
       // handFoundPipeline(predictions, img)
     }
   }
@@ -27005,25 +27014,31 @@ function getAngle(inputBone, matchBone) {
   return angle;
 }
 
-async function placeImage(ctx, prediction, matchIndex, sourceRatio) {
-  const userBone = [prediction.landmarks[0], prediction.landmarks[17]];
-  const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].landmarks[17]];
+async function placeImage(ctx, prediction, matchIndex) {
+  (0, _drawing.drawPoint)(ctx, prediction.centroid[1], prediction.centroid[0], 4);
+  const userBone = [prediction.landmarks[0], prediction.centroid];
+  const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].centroid];
   const angel = getAngle(userBone, matchBone);
   const translateX = prediction.landmarks[0][0];
   const translateY = prediction.landmarks[0][1] - poseData[matchIndex][1].landmarks[0][1]; // ctx.scale(2, 2);
+  // const imageDiff = sourceRatio;
 
-  const imageDiff = sourceRatio;
   const magnitudeUser = Math.sqrt(Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1], 2));
-  const magnitudeMatch = Math.sqrt(Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1], 2));
-  const ratio = magnitudeUser / magnitudeMatch;
+  const magnitudeMatch = Math.sqrt(Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1], 2)); // const ratio = magnitudeUser / magnitudeMatch 
+
   ctx.translate(translateX, translateY);
   ctx.rotate(angel); // ctx.globalAlpha = 0.65;
 
-  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * ratio * imageDiff, poseData[matchIndex][0].height * ratio * imageDiff);
+  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width, poseData[matchIndex][0].height);
   ctx.rotate(-angel); // ctx.scale(1, 1);
 
   ctx.translate(-translateX, -translateY);
   return;
+}
+
+function getCentroid(...args) {
+  const [sumX, sumY] = args.reduce((sums, point) => [sums[0] + point[0], sums[1] + point[1]], [0, 0]);
+  return [sumX / args.length, sumY / args.length];
 }
 },{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js"}],"video.js":[function(require,module,exports) {
 "use strict";
@@ -27100,7 +27115,7 @@ function noCameraMessage(e) {
 function setupDatGui(state) {
   const gui = new dat.GUI();
   state.opacity = 1;
-  state.addHands = false;
+  state.addHands = true;
   state.sourceRatio = 0.3;
   state.drawHandPose = true; // flip horizontally
 
@@ -27161,11 +27176,19 @@ const landmarksRealTime = async video => {
     const predictions = await model.estimateHands(video, state.flip);
 
     if (predictions.length > 0) {
+      const centroid = (0, _imagesData.getCentroid)(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
+      (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
+      ctx.strokeStyle = 'lightgreen';
+      ctx.lineWidth = 3;
+      (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+      predictions[0].centroid = centroid;
       const result = predictions[0].landmarks;
       if (state.drawHandPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
 
       const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state.sourceRatio);
+      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex);
     }
 
     stats.end();

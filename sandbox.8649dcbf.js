@@ -26075,8 +26075,10 @@ function drawKeypoints(ctx, keypoints) {
   ctx.fillStyle = COLOR;
   const keypointsArray = keypoints;
 
+  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
+
   for (let i = 0; i < keypointsArray.length; i++) {
-    if (i === 0 || i === 17) {
+    if (pointFilter(i)) {
       ctx.strokeStyle = HIGHLIGHT_COLOR;
       ctx.fillStyle = HIGHLIGHT_COLOR;
     } else {
@@ -26086,7 +26088,8 @@ function drawKeypoints(ctx, keypoints) {
 
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, i === 0 || i === 17 ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPoint(ctx, x, y, pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPointAnnotation(ctx, x, y, 0, i);
   }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
