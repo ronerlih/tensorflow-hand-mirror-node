@@ -26929,7 +26929,12 @@ var _drawing = require("./drawing.js");
 var _findSimilarVideo = require("./findSimilarVideo");
 
 let normalisedPoses = [];
-const poseData = [];
+const poseData = []; //  in-memory canvas to transfor hand img
+
+const mCanvas = document.createElement('canvas');
+mCanvas.width = 300;
+mCanvas.height = 300;
+const memoryContext = mCanvas.getContext('2d');
 
 async function buildImagesData(model) {
   const images = document.querySelector('#images').children;
@@ -27014,21 +27019,20 @@ async function placeImage(ctx, prediction, matchIndex) {
   (0, _drawing.drawPoint)(ctx, prediction.centroid[1], prediction.centroid[0], 4);
   const userBone = [prediction.landmarks[0], prediction.centroid];
   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].centroid];
-  const angel = getAngle(userBone, matchBone);
   const translateX = prediction.landmarks[0][0];
-  const translateY = prediction.landmarks[0][1] - poseData[matchIndex][1].landmarks[0][1]; // ctx.scale(2, 2);
-  // const imageDiff = sourceRatio;
+  const translateY = prediction.landmarks[0][1];
+  const angel = getAngle(userBone, matchBone); // draw im to mem canvas
+  // memoryContext.drawImage(poseData[matchIndex][0],0,0);
+  // const originContext = poseData[matchIndex][0].getContext('2d');
 
-  const magnitudeUser = Math.sqrt(Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1], 2));
-  const magnitudeMatch = Math.sqrt(Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1], 2)); // const ratio = magnitudeUser / magnitudeMatch 
-  // ctx.translate(translateX, translateY)
-
-  ctx.rotate(-angel); // ctx.globalAlpha = 0.65;
+  ctx.translate(translateX, translateY);
+  ctx.rotate(-angel); // ctx.rotate(-angel)
+  // ctx.globalAlpha = 0.65;
 
   ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width, poseData[matchIndex][0].height);
   ctx.rotate(angel); // ctx.scale(1, 1);
-  // ctx.translate(-translateX, -translateY)
 
+  ctx.translate(-translateX, -translateY);
   return;
 }
 
