@@ -27005,11 +27005,7 @@ function getAngle(inputBone, matchBone) {
   const dAy = inputBone[1][1] - inputBone[0][1];
   const dBx = matchBone[1][0] - matchBone[0][0];
   const dBy = matchBone[1][1] - matchBone[0][1];
-  let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
-
-  if (angle < 0) {
-    angle = angle * -1;
-  }
+  let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy); // if(angle < 0) {angle = angle * -1;}
 
   return angle;
 }
@@ -27025,14 +27021,14 @@ async function placeImage(ctx, prediction, matchIndex) {
 
   const magnitudeUser = Math.sqrt(Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1], 2));
   const magnitudeMatch = Math.sqrt(Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1], 2)); // const ratio = magnitudeUser / magnitudeMatch 
+  // ctx.translate(translateX, translateY)
 
-  ctx.translate(translateX, translateY);
-  ctx.rotate(angel); // ctx.globalAlpha = 0.65;
+  ctx.rotate(-angel); // ctx.globalAlpha = 0.65;
 
   ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width, poseData[matchIndex][0].height);
-  ctx.rotate(-angel); // ctx.scale(1, 1);
+  ctx.rotate(angel); // ctx.scale(1, 1);
+  // ctx.translate(-translateX, -translateY)
 
-  ctx.translate(-translateX, -translateY);
   return;
 }
 
