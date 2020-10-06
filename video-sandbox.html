@@ -1,2 +1,114 @@
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no"><script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script><script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script><style>:root{overflow-x:hidden}#canvas-wrapper{margin:20px auto auto;display:block;text-align:center}#canvas-wrapper,#scatter-gl-container{vertical-align:top}#info{text-align:center}#output,#scatter-gl-container,#scatter-gl-container>*{width:100%;max-width:1280px}#scatter-gl-container,#scatter-gl-container>*{width:auto!important}</style><script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script><body> <div id="info"> <p><strong>Hand dance sandbox 👋 </strong></p> <span>(live-camera version)</span> </div> <a href="index.html">hand pose video test</a> <a href="sandbox.html">images tests</a> <div id="predictions"></div> <div id="canvas-wrapper"> <canvas id="output"></canvas> <video id="video" playsinline="" style="-webkit-transform:scaleX(-1);transform:scaleX(-1);visibility:hidden;width:auto;height:auto;position:absolute;"> </video> </div> <div id="scatter-gl-container"></div> <h4>data images poses</h4> <div id="results"> <canvas width="300" height="300" id="canvas-01"></canvas> <canvas width="300" height="300" id="canvas-02"></canvas> <canvas width="300" height="300" id="canvas-03"></canvas> <canvas width="300" height="300" id="canvas-04"></canvas> <canvas width="300" height="300" id="canvas-05"></canvas> <canvas width="300" height="300" id="canvas-06"></canvas> <canvas width="300" height="300" id="canvas-07"></canvas> <canvas width="300" height="300" id="canvas-08"></canvas> <canvas width="300" height="300" id="canvas-09"></canvas> <canvas width="300" height="300" id="canvas-10"></canvas> <canvas width="300" height="300" id="canvas-11"></canvas> <canvas width="300" height="300" id="canvas-12"></canvas> <canvas width="300" height="300" id="canvas-13"></canvas> <canvas width="300" height="300" id="canvas-14"></canvas> <canvas width="300" height="300" id="canvas-15"></canvas> <canvas width="300" height="300" id="canvas-16"></canvas> <canvas width="300" height="300" id="canvas-17"></canvas> <canvas width="300" height="300" id="canvas-18"></canvas> <canvas width="300" height="300" id="canvas-19"></canvas> <canvas width="300" height="300" id="canvas-20"></canvas> <canvas width="300" height="300" id="canvas-21"></canvas> <canvas width="300" height="300" id="canvas-22"></canvas> <canvas width="300" height="300" id="canvas-23"></canvas> </div> <h4>data images</h4> <div id="images">  <img src="02.1e9a63ae.jpg" id="02" alt=""> <img src="03.5f5e2248.jpg" id="03" alt=""> <img src="04.1dacebc8.jpg" id="04" alt=""> <img src="05.915792b9.jpg" id="05" alt=""> <img src="06.f67c1a2d.jpg" id="06" alt=""> <img src="07.84b35776.jpg" id="07" alt=""> <img src="08.739e2dce.jpg" id="08" alt=""> <img src="09.eb540eaf.jpg" id="09" alt=""> <img src="10.f3951e84.jpg" id="10" alt=""> <img src="11.cb769d90.jpg" id="11" alt=""> <img src="12.9bbf3f7b.jpg" id="12" alt=""> <img src="13.19719d6b.jpg" id="13" alt=""> <img src="14.b0347665.jpg" id="14" alt=""> <img src="15.cffe222f.jpg" id="15" alt=""> <img src="16.27f00863.jpg" id="16" alt=""> <img src="17.6f93f3b9.jpg" id="17" alt=""> <img src="18.c8b4d66d.jpg" id="18" alt="">   </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script> <script src="video.2d5444a3.js"></script>
+<!-- Copyright 2020 Google LLC. All Rights Reserved.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================-->
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+<!-- Load three.js -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+<!-- Load scatter-gl.js -->
+<!-- TODO(annxingyuan): Submit a PR to scatter-gl that allows polylines to update in the render loop. -->
+<script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
+<style>:root { overflow-x: hidden;}
+  #canvas-wrapper {
+    margin: auto ;
+    margin-top: 20px;
+    display: block;
+    text-align: center;
+  }
+  #canvas-wrapper, #scatter-gl-container {
+    /* display: inline-block; */
+    vertical-align: top;
+  }
+  #info { text-align: center;}
+  #output, #scatter-gl-container, #scatter-gl-container > *{
+    width: 100%;
+    max-width: 1280px;
+  }
+  #scatter-gl-container, #scatter-gl-container > * {
+    width:auto!important;
+  }</style>
+<script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+
+<body>
+  <div id="info"> 
+    <p><strong>Hand dance sandbox 👋 </strong></p>
+    <span>(live-camera version)</span>
+  </div>
+  <a href="/index.html">hand pose video test</a>
+  <a href="/sandbox.html">images tests</a>
+  <div id="predictions"></div>
+  <div id="canvas-wrapper">
+    <canvas id="output"></canvas>
+    <video id="video" playsinline="" style="
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    visibility: hidden;
+    width: auto;
+    height: auto;
+    position: absolute;
+    ">
+  </video>
+  </div>
+  <div id="scatter-gl-container"></div>
+  <h4>data images poses</h4>
+   <div id="results">
+      <canvas width="300" height="300" id="canvas-01"></canvas>
+      <canvas width="300" height="300" id="canvas-02"></canvas>
+      <canvas width="300" height="300" id="canvas-03"></canvas>
+      <canvas width="300" height="300" id="canvas-04"></canvas>
+      <canvas width="300" height="300" id="canvas-05"></canvas>
+      <canvas width="300" height="300" id="canvas-06"></canvas>
+      <canvas width="300" height="300" id="canvas-07"></canvas>
+      <canvas width="300" height="300" id="canvas-08"></canvas>
+      <canvas width="300" height="300" id="canvas-09"></canvas>
+      <canvas width="300" height="300" id="canvas-10"></canvas>
+      <canvas width="300" height="300" id="canvas-11"></canvas>
+      <canvas width="300" height="300" id="canvas-12"></canvas>
+      <canvas width="300" height="300" id="canvas-13"></canvas>
+      <canvas width="300" height="300" id="canvas-14"></canvas>
+      <canvas width="300" height="300" id="canvas-15"></canvas>
+      <canvas width="300" height="300" id="canvas-16"></canvas>
+      <canvas width="300" height="300" id="canvas-17"></canvas>
+      <canvas width="300" height="300" id="canvas-18"></canvas>
+      <canvas width="300" height="300" id="canvas-19"></canvas>
+      <canvas width="300" height="300" id="canvas-20"></canvas>
+      <canvas width="300" height="300" id="canvas-21"></canvas>
+      <canvas width="300" height="300" id="canvas-22"></canvas>
+      <canvas width="300" height="300" id="canvas-23"></canvas>
+   </div>
+   <h4>data images</h4>
+   <div id="images">
+      <!-- <img src="./data/border/01.jpg" id="01" alt="" /> -->
+      <img src="/02.4a83ffad.jpg" id="02" alt="">
+      <img src="/03.58aed30c.jpg" id="03" alt="">
+      <img src="/04.2aeaf708.jpg" id="04" alt="">
+      <img src="/05.042c7391.jpg" id="05" alt="">
+      <img src="/06.af047bb3.jpg" id="06" alt="">
+      <img src="/07.a798df23.jpg" id="07" alt="">
+      <img src="/08.7d7e406e.jpg" id="08" alt="">
+      <img src="/09.a96bc1e7.jpg" id="09" alt="">
+      <img src="/10.85747c44.jpg" id="10" alt="">
+      <img src="/11.992ef7de.jpg" id="11" alt="">
+      <img src="/12.f6be340c.jpg" id="12" alt="">
+      <img src="/13.4844d01b.jpg" id="13" alt="">
+      <img src="/14.363e4c85.jpg" id="14" alt="">
+      <img src="/15.000d6378.jpg" id="15" alt="">
+      <img src="/16.b9c114d2.jpg" id="16" alt="">
+      <img src="/17.18f9b7ff.jpg" id="17" alt="">
+      <img src="/18.e07146c2.jpg" id="18" alt="">
+      <!-- <img src="./data/border/19.jpg" id="19" alt="" /> -->
+      <!-- <img src="./data/border/20.jpg" id="20" alt="" /> -->
+   </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+  <script src="/video.422110ec.js"></script>
 </body>

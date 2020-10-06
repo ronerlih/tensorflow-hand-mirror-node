@@ -26076,7 +26076,7 @@ function drawPoint(ctx, y, x, r) {
 }
 
 function drawPointAnnotation(ctx, y, x, r, text, color) {
-  ctx.font = '14px sans-serif;';
+  ctx.font = '18px sans-serif;';
   ctx.fillText(text, x + 10, y);
   ctx.beginPath();
   ctx.arc(x, y, r, 0, 2 * Math.PI);
@@ -26088,8 +26088,10 @@ function drawKeypoints(ctx, keypoints) {
   ctx.fillStyle = COLOR;
   const keypointsArray = keypoints;
 
+  const filter = x => x === 0 || x === 17 || x === 5 || x === 2;
+
   for (let i = 0; i < keypointsArray.length; i++) {
-    if (i === 0 || i === 17) {
+    if (filter(i)) {
       ctx.strokeStyle = HIGHLIGHT_COLOR;
       ctx.fillStyle = HIGHLIGHT_COLOR;
     } else {
@@ -26099,7 +26101,8 @@ function drawKeypoints(ctx, keypoints) {
 
     const y = keypointsArray[i][0];
     const x = keypointsArray[i][1];
-    drawPoint(ctx, x - 2, y - 2, i === 0 || i === 17 ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPoint(ctx, x, y, filter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+    drawPointAnnotation(ctx, x, y, 0, i);
   }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
@@ -26881,8 +26884,14 @@ let vptree; // where we’ll store a reference to our vptree
 // Build the tree once
 
 function buildVPTree(poseData) {
+  // let vptreeString = localStorage.getItem('vptree')
+  // if(!vptreeString){
   // Initialize our vptree with our images’ pose data and a distance function
-  vptree = VPTreeFactory.build(poseData, cosineDistanceMatching);
+  vptree = VPTreeFactory.build(poseData, cosineDistanceMatching); // localStorage.setItem('vptree', vptree.stringify())
+  // }
+  // else {
+  // vptree = VPTreeFactory.load(poseData, cosineDistanceMatching, vptreeString)
+  // }
 } // Function from the previous section covering cosine distance
 
 
@@ -26928,10 +26937,20 @@ let normalisedPoses = [];
 const poseData = [];
 
 async function buildImagesData(model) {
-  const images = document.querySelector('#images').children;
-  const imagesAndPoses = await normaliseImages(images, model);
-  (0, _findSimilarVideo.buildVPTree)(normalisedPoses);
-  return imagesAndPoses;
+  const images = document.querySelector('#images').children; // build hand pool data
+
+  let normalisedPoses = JSON.parse(localStorage.getItem('normalized-predictions'));
+
+  if (!normalisedPoses) {
+    const imagesAndPoses = await normaliseImages(images, model);
+    const normalized = imagesAndPoses.map(imgAndPose => imgAndPose[1]);
+    (0, _findSimilarVideo.buildVPTree)(normalized);
+    localStorage.setItem('normalized-predictions', JSON.stringify(normalized));
+  } else {
+    (0, _findSimilarVideo.buildVPTree)(normalisedPoses);
+  }
+
+  return [images, normalisedPoses];
 }
 
 async function findMatch(lookupPose) {
@@ -26945,11 +26964,11 @@ async function normaliseImages(images, model) {
     const predictions = await model.estimateHands(img);
 
     if (predictions[0] && predictions[0].landmarks) {
-      normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
-      poseData.push([img, predictions[0]]); // draw to canvas
+      normalisedPoses.push(mapLandmarks(predictions[0].landmarks)); // draw to canvas
       // get canvas and draw
 
       const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
+      poseData.push([canvas, predictions[0]]);
       drawToCanvas(canvas, predictions, img); // canvas.boundingBox =  predictions[0].boundingBox
       // handFoundPipeline(predictions, img)
     }
@@ -26996,35 +27015,49 @@ function getAngle(inputBone, matchBone) {
   const dAy = inputBone[1][1] - inputBone[0][1];
   const dBx = matchBone[1][0] - matchBone[0][0];
   const dBy = matchBone[1][1] - matchBone[0][1];
-  let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy);
-
-  if (angle < 0) {
-    angle = angle * -1;
-  }
+  let angle = Math.atan2(dAx * dBy - dAy * dBx, dAx * dBx + dAy * dBy); // if(angle < 0) {angle = angle * -1;}
 
   return angle;
 }
 
-async function placeImage(ctx, prediction, matchIndex, sourceRatio) {
+async function placeImage(ctx, prediction, matchIndex, sourceRatio, offsetX, offsetY) {
+  getAlignmentLineAndPivot(prediction.landmarks[0]);
   const userBone = [prediction.landmarks[0], prediction.landmarks[17]];
   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].landmarks[17]];
   const angel = getAngle(userBone, matchBone);
-  const translateX = prediction.landmarks[0][0];
-  const translateY = prediction.landmarks[0][1] - poseData[matchIndex][1].landmarks[0][1]; // ctx.scale(2, 2);
+  const translateX = prediction.landmarks[0][0] - (poseData[matchIndex][1].landmarks[0][0] - poseData[matchIndex][1].boundingBox.topLeft[0]) + offsetX;
+  const translateY = prediction.landmarks[0][1] - (poseData[matchIndex][1].landmarks[0][1] - poseData[matchIndex][1].boundingBox.topLeft[1]) + offsetY; // // ctx.scale(2, 2);
+  // const scaleDiff = 
+  //    ((prediction.boundingBox.bottomRight[1] - prediction.boundingBox.topLeft[1]) /
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1] )).minMax(0.2, 3.5)
+  //    console.log(scaleDiff)
+  //    const imageDiff = sourceRatio;
+  // const magnitudeUser = Math.sqrt(
+  //      Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0],2)
+  //    + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1],2))
+  // const magnitudeMatch = Math.sqrt(
+  //      Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0],2)
+  //    + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1],2))
+  // // const ratio = magnitudeUser / magnitudeMatch 
+  // const ratio = scaleDiff
 
-  const imageDiff = sourceRatio;
-  const magnitudeUser = Math.sqrt(Math.pow(prediction.landmarks[17][0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.landmarks[17][1] - prediction.landmarks[0][1], 2));
-  const magnitudeMatch = Math.sqrt(Math.pow(poseData[matchIndex][1].landmarks[17][0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].landmarks[17][1] - poseData[matchIndex][1].landmarks[0][1], 2));
-  const ratio = magnitudeUser / magnitudeMatch;
   ctx.translate(translateX, translateY);
-  ctx.rotate(angel); // ctx.globalAlpha = 0.65;
+  ctx.rotate(-angel); // ctx.globalAlpha = 0.65;
 
-  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * ratio * imageDiff, poseData[matchIndex][0].height * ratio * imageDiff);
-  ctx.rotate(-angel); // ctx.scale(1, 1);
+  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width, poseData[matchIndex][0].height);
+  ctx.rotate(angel); // ctx.scale(1, 1);
 
   ctx.translate(-translateX, -translateY);
   return;
 }
+
+function getAlignmentLineAndPivot(landmarks) {
+  console.log(landmarks);
+}
+
+Number.prototype.minMax = function (min, max) {
+  return Math.min(Math.max(this, min), max);
+};
 },{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js"}],"video.js":[function(require,module,exports) {
 "use strict";
 
@@ -27070,16 +27103,21 @@ const state = {};
 state.confidence = 0.5;
 state.flip = false;
 let model;
-let imagesAndPoses;
 let globalCtx;
 
 const main = async () => {
+  // get from local storage
+  console.time('load model');
   model = await handpose.load({
     detectionConfidence: state.confidence
-  }); // build hand pool data
+  });
+  console.timeEnd('load model');
+  console.time('imges and poses'); // build hand pool data
 
-  imagesAndPoses = await (0, _imagesData.buildImagesData)(model);
+  await (0, _imagesData.buildImagesData)(model);
+  console.timeEnd('imges and poses');
   let video;
+  console.time('init video');
 
   try {
     video = await (0, _video.loadVideo)(mobile);
@@ -27087,6 +27125,7 @@ const main = async () => {
     noCameraMessage(e);
   }
 
+  console.timeEnd('init video');
   landmarksRealTime(video);
 };
 
@@ -27102,7 +27141,9 @@ function setupDatGui(state) {
   state.opacity = 1;
   state.addHands = false;
   state.sourceRatio = 0.3;
-  state.drawHandPose = true; // flip horizontally
+  state.drawHandPose = true;
+  state.offsetX = 50;
+  state.offsetY = 50; // flip horizontally
 
   gui.add(state, "flip").onChange(flip => {
     state.flip = flip;
@@ -27130,12 +27171,23 @@ function setupDatGui(state) {
 
   gui.add(state, "drawHandPose").onChange(val => {
     state.drawHandPose = val;
+  }); // source image ratio diffrence
+
+  gui.add(state, "offsetX", -300, 300).onChange(val => {
+    state.offsetX = val;
+  }); // source image ratio diffrence
+
+  gui.add(state, "offsetY", -300, 300).onChange(val => {
+    state.offsetY = val;
   });
 }
 
 const landmarksRealTime = async video => {
-  // control
-  setupDatGui(state); // stats (frame rate)
+  console.time('init gui'); // control
+
+  setupDatGui(state);
+  console.timeEnd('init gui');
+  console.time('setup flandmarksRealTime'); // stats (frame rate)
 
   const stats = new Stats();
   stats.showPanel(1);
@@ -27155,6 +27207,8 @@ const landmarksRealTime = async video => {
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1); // console.log(imagesAndPoses)
 
+  console.timeEnd('setup flandmarksRealTime');
+
   async function frameLandmarks() {
     stats.begin();
     ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
@@ -27162,10 +27216,14 @@ const landmarksRealTime = async video => {
 
     if (predictions.length > 0) {
       const result = predictions[0].landmarks;
-      if (state.drawHandPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+
+      if (state.drawHandPose) {
+        (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations);
+      } // overlay hand image
+
 
       const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state.sourceRatio);
+      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state.sourceRatio, state.offsetX, state.offsetY);
     }
 
     stats.end();

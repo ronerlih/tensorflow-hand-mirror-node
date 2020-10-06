@@ -1,2 +1,117 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Document</title><style>#images,#results{border:2px solid}#images img{width:300px}:not(#input),:not(#input-canvas),canvas,img{border:6px solid #fff}#input{position:relative}#input-canvas{position:absolute}.blink{animation:blinkingText 1.8s ease-in-out infinite}@keyframes blinkingText{0%{opacity:.2}50%{opacity:1}to{opacity:.2}}</style></head><body> <div id="info"></div> <h4>input image</h4> <div id="input"> <canvas width="1080" height="720" id="input-canvas"></canvas> <img src="input.999cbdc7.jpg" alt=""> </div> <h4>reordered data images poses</h4> <div id="sorted-results"> <canvas width="300" height="300" id="sorted-0"></canvas> <canvas width="300" height="300" id="sorted-1"></canvas> <canvas width="300" height="300" id="sorted-2"></canvas> <canvas width="300" height="300" id="sorted-3"></canvas> <canvas width="300" height="300" id="sorted-4"></canvas> <canvas width="300" height="300" id="sorted-5"></canvas> <canvas width="300" height="300" id="sorted-6"></canvas> <canvas width="300" height="300" id="sorted-7"></canvas> <canvas width="300" height="300" id="sorted-8"></canvas> <canvas width="300" height="300" id="sorted-9"></canvas> </div> <h4>resized data images poses</h4> <div id="resized-results"> <canvas width="300" height="300" id="resized-01"></canvas> <canvas width="300" height="300" id="resized-02"></canvas> <canvas width="300" height="300" id="resized-03"></canvas> <canvas width="300" height="300" id="resized-04"></canvas> <canvas width="300" height="300" id="resized-05"></canvas> <canvas width="300" height="300" id="resized-06"></canvas> <canvas width="300" height="300" id="resized-07"></canvas> <canvas width="300" height="300" id="resized-08"></canvas> <canvas width="300" height="300" id="resized-09"></canvas> <canvas width="300" height="300" id="resized-10"></canvas> <canvas width="300" height="300" id="resized-11"></canvas> <canvas width="300" height="300" id="resized-12"></canvas> <canvas width="300" height="300" id="resized-13"></canvas> <canvas width="300" height="300" id="resized-14"></canvas> <canvas width="300" height="300" id="resized-15"></canvas> <canvas width="300" height="300" id="resized-16"></canvas> <canvas width="300" height="300" id="resized-17"></canvas> </div> <h4>data images poses</h4> <div id="results"> <canvas width="300" height="300" id="canvas-01"></canvas> <canvas width="300" height="300" id="canvas-02"></canvas> <canvas width="300" height="300" id="canvas-03"></canvas> <canvas width="300" height="300" id="canvas-04"></canvas> <canvas width="300" height="300" id="canvas-05"></canvas> <canvas width="300" height="300" id="canvas-06"></canvas> <canvas width="300" height="300" id="canvas-07"></canvas> <canvas width="300" height="300" id="canvas-08"></canvas> <canvas width="300" height="300" id="canvas-09"></canvas> <canvas width="300" height="300" id="canvas-10"></canvas> <canvas width="300" height="300" id="canvas-11"></canvas> <canvas width="300" height="300" id="canvas-12"></canvas> <canvas width="300" height="300" id="canvas-13"></canvas> <canvas width="300" height="300" id="canvas-14"></canvas> <canvas width="300" height="300" id="canvas-15"></canvas> <canvas width="300" height="300" id="canvas-16"></canvas> <canvas width="300" height="300" id="canvas-17"></canvas> </div> <h4>data images</h4> <div id="images">  <img src="02.1e9a63ae.jpg" id="02" alt=""> <img src="03.5f5e2248.jpg" id="03" alt=""> <img src="04.1dacebc8.jpg" id="04" alt=""> <img src="05.915792b9.jpg" id="05" alt=""> <img src="06.f67c1a2d.jpg" id="06" alt=""> <img src="07.84b35776.jpg" id="07" alt=""> <img src="08.739e2dce.jpg" id="08" alt=""> <img src="09.eb540eaf.jpg" id="09" alt=""> <img src="10.f3951e84.jpg" id="10" alt=""> <img src="11.cb769d90.jpg" id="11" alt=""> <img src="12.9bbf3f7b.jpg" id="12" alt=""> <img src="13.19719d6b.jpg" id="13" alt=""> <img src="14.b0347665.jpg" id="14" alt=""> <img src="15.cffe222f.jpg" id="15" alt=""> <img src="16.27f00863.jpg" id="16" alt=""> <img src="17.6f93f3b9.jpg" id="17" alt=""> </div> <script src="sandbox.ef20de12.js"></script>
-</body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>Document</title>
+   <style>#images, #results {
+         border:2px solid
+      }
+      #images img{
+         width: 300px;
+      }
+      canvas, img, :not(#input-canvas), :not(#input) { border: 6px solid white;}
+      
+      #input {
+         position: relative;
+      }
+      #input-canvas {
+         position: absolute;
+      }
+      .blink {
+         animation: blinkingText 1.8s infinite ease-in-out;
+      }
+      @keyframes blinkingText{
+         0%{	opacity: 0.2;	}
+         50%{	opacity: 1;	}
+         100%{	opacity: 0.2;	}
+      }</style>
+</head>
+<body>
+   <div id="info"></div>
+
+   <h4>input image</h4>
+   <div id="input">
+      <canvas width="1080" height="720" id="input-canvas"></canvas>
+      <img src="/input.ccdbfa01.jpg" alt="">
+   </div>
+   <h4>reordered data images poses</h4>
+   <div id="sorted-results">
+      <canvas width="300" height="300" id="sorted-0"></canvas>
+      <canvas width="300" height="300" id="sorted-1"></canvas>
+      <canvas width="300" height="300" id="sorted-2"></canvas>
+      <canvas width="300" height="300" id="sorted-3"></canvas>
+      <canvas width="300" height="300" id="sorted-4"></canvas>
+      <canvas width="300" height="300" id="sorted-5"></canvas>
+      <canvas width="300" height="300" id="sorted-6"></canvas>
+      <canvas width="300" height="300" id="sorted-7"></canvas>
+      <canvas width="300" height="300" id="sorted-8"></canvas>
+      <canvas width="300" height="300" id="sorted-9"></canvas>
+   </div>
+
+   <h4>resized data images poses</h4>
+   <div id="resized-results">
+      <canvas width="300" height="300" id="resized-01"></canvas>
+      <canvas width="300" height="300" id="resized-02"></canvas>
+      <canvas width="300" height="300" id="resized-03"></canvas>
+      <canvas width="300" height="300" id="resized-04"></canvas>
+      <canvas width="300" height="300" id="resized-05"></canvas>
+      <canvas width="300" height="300" id="resized-06"></canvas>
+      <canvas width="300" height="300" id="resized-07"></canvas>
+      <canvas width="300" height="300" id="resized-08"></canvas>
+      <canvas width="300" height="300" id="resized-09"></canvas>
+      <canvas width="300" height="300" id="resized-10"></canvas>
+      <canvas width="300" height="300" id="resized-11"></canvas>
+      <canvas width="300" height="300" id="resized-12"></canvas>
+      <canvas width="300" height="300" id="resized-13"></canvas>
+      <canvas width="300" height="300" id="resized-14"></canvas>
+      <canvas width="300" height="300" id="resized-15"></canvas>
+      <canvas width="300" height="300" id="resized-16"></canvas>
+      <canvas width="300" height="300" id="resized-17"></canvas>
+   </div>
+
+   <h4>data images poses</h4>
+   <div id="results">
+      <canvas width="300" height="300" id="canvas-01"></canvas>
+      <canvas width="300" height="300" id="canvas-02"></canvas>
+      <canvas width="300" height="300" id="canvas-03"></canvas>
+      <canvas width="300" height="300" id="canvas-04"></canvas>
+      <canvas width="300" height="300" id="canvas-05"></canvas>
+      <canvas width="300" height="300" id="canvas-06"></canvas>
+      <canvas width="300" height="300" id="canvas-07"></canvas>
+      <canvas width="300" height="300" id="canvas-08"></canvas>
+      <canvas width="300" height="300" id="canvas-09"></canvas>
+      <canvas width="300" height="300" id="canvas-10"></canvas>
+      <canvas width="300" height="300" id="canvas-11"></canvas>
+      <canvas width="300" height="300" id="canvas-12"></canvas>
+      <canvas width="300" height="300" id="canvas-13"></canvas>
+      <canvas width="300" height="300" id="canvas-14"></canvas>
+      <canvas width="300" height="300" id="canvas-15"></canvas>
+      <canvas width="300" height="300" id="canvas-16"></canvas>
+      <canvas width="300" height="300" id="canvas-17"></canvas>
+   </div>
+
+   <h4>data images</h4>
+   <div id="images">
+      <!-- <img src="./data/border/01.jpg" id="01" alt="" /> -->
+      <img src="/02.4a83ffad.jpg" id="02" alt="">
+      <img src="/03.58aed30c.jpg" id="03" alt="">
+      <img src="/04.2aeaf708.jpg" id="04" alt="">
+      <img src="/05.042c7391.jpg" id="05" alt="">
+      <img src="/06.af047bb3.jpg" id="06" alt="">
+      <img src="/07.a798df23.jpg" id="07" alt="">
+      <img src="/08.7d7e406e.jpg" id="08" alt="">
+      <img src="/09.a96bc1e7.jpg" id="09" alt="">
+      <img src="/10.85747c44.jpg" id="10" alt="">
+      <img src="/11.992ef7de.jpg" id="11" alt="">
+      <img src="/12.f6be340c.jpg" id="12" alt="">
+      <img src="/13.4844d01b.jpg" id="13" alt="">
+      <img src="/14.363e4c85.jpg" id="14" alt="">
+      <img src="/15.000d6378.jpg" id="15" alt="">
+      <img src="/16.b9c114d2.jpg" id="16" alt="">
+      <img src="/17.18f9b7ff.jpg" id="17" alt="">
+   </div>
+
+   <script src="/sandbox.8649dcbf.js"></script>
+</body>
+</html>
