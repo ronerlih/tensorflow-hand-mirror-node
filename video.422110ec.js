@@ -27019,20 +27019,24 @@ async function placeImage(ctx, prediction, matchIndex) {
   (0, _drawing.drawPoint)(ctx, prediction.centroid[1], prediction.centroid[0], 4);
   const userBone = [prediction.landmarks[0], prediction.centroid];
   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].centroid];
-  const translateX = prediction.landmarks[0][0];
-  const translateY = prediction.landmarks[0][1];
+  const translateRotateX = prediction.landmarks[0][0];
+  const translateRotateY = prediction.landmarks[0][1];
+  const translateMatchRootX = -poseData[matchIndex][1].landmarks[0][0];
+  const translateMatchRootY = -poseData[matchIndex][1].landmarks[0][1];
   const angel = getAngle(userBone, matchBone); // draw im to mem canvas
   // memoryContext.drawImage(poseData[matchIndex][0],0,0);
   // const originContext = poseData[matchIndex][0].getContext('2d');
 
-  ctx.translate(translateX, translateY);
-  ctx.rotate(-angel); // ctx.rotate(-angel)
+  ctx.translate(translateRotateX, translateRotateY);
+  ctx.rotate(-angel);
+  ctx.translate(translateMatchRootX, translateMatchRootY); // ctx.rotate(-angel)
   // ctx.globalAlpha = 0.65;
 
   ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width, poseData[matchIndex][0].height);
+  ctx.translate(-translateMatchRootX, -translateMatchRootY);
   ctx.rotate(angel); // ctx.scale(1, 1);
 
-  ctx.translate(-translateX, -translateY);
+  ctx.translate(-translateRotateX, -translateRotateY);
   return;
 }
 
