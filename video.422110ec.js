@@ -26936,9 +26936,9 @@ mCanvas.width = 300;
 mCanvas.height = 300;
 const memoryContext = mCanvas.getContext('2d');
 
-async function buildImagesData(model) {
+async function buildImagesData(model, config) {
   const images = document.querySelector('#images').children;
-  const imagesAndPoses = await normaliseImages(images, model);
+  const imagesAndPoses = await normaliseImages(images, model, config);
   (0, _findSimilarVideo.buildVPTree)(normalisedPoses);
   return imagesAndPoses;
 }
@@ -26948,7 +26948,7 @@ async function findMatch(lookupPose) {
   return similarIndexOrder;
 }
 
-async function normaliseImages(images, model) {
+async function normaliseImages(images, model, config) {
   for (let [i, img] of [...images].entries()) {
     // get prediction
     const predictions = await model.estimateHands(img);
@@ -26962,10 +26962,14 @@ async function normaliseImages(images, model) {
       const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
       poseData.push([canvas, predictions[0]]);
       const context = canvas.getContext('2d');
-      drawToCanvas(canvas, predictions, img);
-      (0, _drawing.drawPoint)(context, centroid[1], centroid[0], 4);
-      (0, _drawing.drawPath)(context, [predictions[0].landmarks[0], centroid], false); // canvas.boundingBox =  predictions[0].boundingBox
+      drawToCanvas(canvas, predictions, img, config.drawHandPoseOnData);
+
+      if (config.drawHandPoseOnData) {
+        (0, _drawing.drawPoint)(context, centroid[1], centroid[0], 4);
+        (0, _drawing.drawPath)(context, [predictions[0].landmarks[0], centroid], false);
+      } // canvas.boundingBox =  predictions[0].boundingBox
       // handFoundPipeline(predictions, img)
+
     }
   }
 
@@ -26985,11 +26989,11 @@ function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight) {
 } // draw the keypoints if hter and img from img tag
 
 
-function drawToCanvas(canvas, predictions, img) {
+function drawToCanvas(canvas, predictions, img, drawHandPoseOnData) {
   var context = canvas.getContext('2d');
   if (img) context.drawImage(img, 0, 0);
 
-  if (predictions.length > 0) {
+  if (predictions.length > 0 && drawHandPoseOnData) {
     const result = predictions[0].landmarks;
     (0, _drawing.drawKeypoints)(context, result, predictions[0].annotations);
     context.beginPath();
@@ -27028,8 +27032,7 @@ async function placeImage(ctx, prediction, matchIndex) {
   console.log(userDistance);
   const matchDistance = Math.sqrt(Math.pow(poseData[matchIndex][1].centroid[0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].centroid[1] - poseData[matchIndex][1].landmarks[0][1], 2));
   console.log(matchDistance);
-  const scale = userDistance / matchDistance;
-  console.log(scale); // draw im to mem canvas
+  const scale = userDistance / matchDistance; // draw im to mem canvas
   // memoryContext.drawImage(poseData[matchIndex][0],0,0);
   // const originContext = poseData[matchIndex][0].getContext('2d');
 
@@ -27037,7 +27040,14 @@ async function placeImage(ctx, prediction, matchIndex) {
   ctx.rotate(-angel);
   ctx.translate(translateMatchRootX * scale, translateMatchRootY * scale); // ctx.globalAlpha = 0.65;
 
-  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * scale, poseData[matchIndex][0].height * scale);
+  ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * scale, poseData[matchIndex][0].height * scale); // ctx.drawImage(
+  //    poseData[matchIndex][0],
+  //    poseData[matchIndex][1].boundingBox.topLeft[0],
+  //    poseData[matchIndex][1].boundingBox.topLeft[1],
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[0] - poseData[matchIndex][1].boundingBox.topLeft[0]) * scale,
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]) * scale,
+  //    );
+
   ctx.translate(-translateMatchRootX * scale, -translateMatchRootY * scale);
   ctx.rotate(angel);
   ctx.translate(-translateRotateX, -translateRotateY);
@@ -27092,16 +27102,19 @@ const mobile = utils.isMobile();
 const state = {};
 state.confidence = 0.5;
 state.flip = false;
+state.drawHandPoseOnData = false;
+state.opacity = 0.6;
 let model;
 let imagesAndPoses;
 let globalCtx;
+let realtimeAnimationFrameRef;
 
 const main = async () => {
   model = await handpose.load({
     detectionConfidence: state.confidence
   }); // build hand pool data
 
-  imagesAndPoses = await (0, _imagesData.buildImagesData)(model);
+  imagesAndPoses = await (0, _imagesData.buildImagesData)(model, state);
   let video;
 
   try {
@@ -27122,10 +27135,11 @@ function noCameraMessage(e) {
 
 function setupDatGui(state) {
   const gui = new dat.GUI();
-  state.opacity = 1;
+  state.opacity = 0.6;
   state.addHands = true;
   state.sourceRatio = 0.3;
-  state.drawHandPose = true; // flip horizontally
+  state.drawHandPose = true;
+  if (globalCtx) globalCtx.globalAlpha = state.opacity; // flip horizontally
 
   gui.add(state, "flip").onChange(flip => {
     state.flip = flip;
@@ -27153,6 +27167,13 @@ function setupDatGui(state) {
 
   gui.add(state, "drawHandPose").onChange(val => {
     state.drawHandPose = val;
+  }); // draw data pose switch
+
+  gui.add(state, "drawHandPoseOnData").onChange(val => {
+    state.drawHandPoseOnData = val;
+    gui.destroy();
+    cancelAnimationFrame(realtimeAnimationFrameRef);
+    main();
   });
 }
 
@@ -27170,6 +27191,8 @@ const landmarksRealTime = async video => {
   canvas.height = videoHeight;
   const ctx = canvas.getContext("2d");
   globalCtx = ctx;
+  console.log(state.opacity);
+  globalCtx.globalAlpha = state.opacity;
   video.width = videoWidth;
   video.height = videoHeight; // ctx.clearRect(0, 0, videoWidth, videoHeight);
   // ctx.strokeStyle = "lightgreen";
@@ -27200,7 +27223,7 @@ const landmarksRealTime = async video => {
     }
 
     stats.end();
-    requestAnimationFrame(frameLandmarks);
+    realtimeAnimationFrameRef = requestAnimationFrame(frameLandmarks);
   }
 
   frameLandmarks();
