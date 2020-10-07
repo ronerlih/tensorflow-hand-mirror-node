@@ -27063,20 +27063,25 @@ async function placeImage(ctx, prediction, matchIndex, options) {
 
   ctx.translate(translateRotateX, translateRotateY);
   ctx.rotate(-angel);
-  ctx.translate(translateMatchRootX * scale, translateMatchRootY * scale); // ctx.globalAlpha = 0.65;
+  ctx.translate(translateMatchRootX * scale, translateMatchRootY * scale);
+  ctx.globalAlpha = 0.65; // ctx.globalCompositeOperation = 'destination-in';
+  // ctx.globalCompositeOperation = 'destination-atop';
+  // ctx.globalCompositeOperation = 'overlay';
 
+  (0, _drawing.drawPoint)(ctx, 0, 0, 5);
   ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * scale, poseData[matchIndex][0].height * scale); // ctx.drawImage(
   //    poseData[matchIndex][0],
   //    poseData[matchIndex][1].boundingBox.topLeft[0],
   //    poseData[matchIndex][1].boundingBox.topLeft[1],
   //    (poseData[matchIndex][1].boundingBox.bottomRight[0] - poseData[matchIndex][1].boundingBox.topLeft[0]),
   //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]),
-  //    (poseData[matchIndex][1].landmarks[0][0] * scale) - prediction.landmarks[0][0] + prediction.boundingBox.topLeft[0],
-  //    (poseData[matchIndex][1].landmarks[0][1] * scale) - prediction.landmarks[0][1] + prediction.boundingBox.topLeft[1],
+  //    translateMatchRootX * scale,
+  //    translateMatchRootX * scale,
   //    (poseData[matchIndex][1].boundingBox.bottomRight[0] - poseData[matchIndex][1].boundingBox.topLeft[0]) * scale,
   //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]) * scale
   //    );
 
+  ctx.globalCompositeOperation = 'source-over';
   ctx.translate(-translateMatchRootX * scale, -translateMatchRootY * scale);
   ctx.rotate(angel);
   ctx.translate(-translateRotateX, -translateRotateY);
@@ -27134,7 +27139,11 @@ state.flip = false;
 state.drawHandPoseOnData = true;
 state.opacity = 0.6;
 state.xOffset = 0;
-state.yOffset = 0;
+state.destinationIn = 0;
+state.destinationIn = 0;
+state.destinationIn = 0;
+state.destinationIn = 0;
+state.destinationIn = 0;
 let model;
 let imagesAndPoses;
 let globalCtx;
@@ -27170,46 +27179,51 @@ function setupDatGui(state) {
   state.addHands = true;
   state.sourceRatio = 0.3;
   state.drawHandPose = true;
-  if (globalCtx) globalCtx.globalAlpha = state.opacity; // flip horizontally
+  if (globalCtx) globalCtx.globalAlpha = state.opacity;
+  const handSource = gui.addFolder('hand source'); //confidence bar
 
-  gui.add(state, "flip").onChange(flip => {
-    state.flip = flip;
-  }); //confidence bar
-
-  gui.add(state, "confidence", 0, 1).onChange(async sliderValue => {
+  handSource.add(state, "confidence", 0, 1).onChange(async sliderValue => {
     state.confidence = sliderValue;
     model = await handpose.load({
       detectionConfidence: state.confidence
     });
-  }); //global alpha
+  });
+  const video = gui.addFolder('video'); //global alpha
 
-  gui.add(state, "opacity", 0, 1).onChange(sliderValue => {
+  video.add(state, "opacity", 0, 1).onChange(sliderValue => {
     state.opacity = sliderValue;
     if (globalCtx) globalCtx.globalAlpha = sliderValue;
+  });
+  const placement = gui.addFolder('placement'); // add hand
+
+  placement.add(state, "addHands").onChange(flip => {
+    state.addHands = flip;
   }); //xOffset
 
-  gui.add(state, "xOffset", -400, 400).onChange(sliderValue => {
+  placement.add(state, "xOffset", -400, 400).onChange(sliderValue => {
     state.xOffset = sliderValue;
   }); //yOffset
 
-  gui.add(state, "xOffset", -400, 400).onChange(sliderValue => {
+  placement.add(state, "xOffset", -400, 400).onChange(sliderValue => {
     state.yOffset = sliderValue;
-  }); // add hand
-
-  gui.add(state, "addHands").onChange(flip => {
-    state.addHands = flip;
   }); // source image ratio diffrence
 
-  gui.add(state, "drawHandPose").onChange(val => {
+  placement.add(state, "drawHandPose").onChange(val => {
     state.drawHandPose = val;
+  });
+  const drawing = gui.addFolder('drawing'); // flip horizontally
+
+  drawing.add(state, "flip").onChange(flip => {
+    state.flip = flip;
   }); // draw data pose switch
 
-  gui.add(state, "drawHandPoseOnData").onChange(val => {
+  drawing.add(state, "drawHandPoseOnData").onChange(val => {
     state.drawHandPoseOnData = val;
     gui.destroy();
     cancelAnimationFrame(realtimeAnimationFrameRef);
     main();
   });
+  gui.addFolder('blending');
 }
 
 const landmarksRealTime = async video => {
