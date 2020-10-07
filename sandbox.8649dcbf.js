@@ -26073,7 +26073,8 @@ function drawPointAnnotation(ctx, y, x, r, text, color) {
 function drawKeypoints(ctx, keypoints) {
   ctx.strokeStyle = COLOR;
   ctx.fillStyle = COLOR;
-  const keypointsArray = keypoints;
+  const keypointsArray = keypoints; // const pointFilter = idx => idx === 0 || idx === 2 || idx === 5 || idx === 9 || idx === 13 || idx === 17
+  // const pointFilter = idx => idx === 0 || idx === 4 || idx === 8 || idx === 12 || idx === 16 || idx === 20
 
   const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
 

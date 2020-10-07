@@ -26086,7 +26086,8 @@ function drawPointAnnotation(ctx, y, x, r, text, color) {
 function drawKeypoints(ctx, keypoints) {
   ctx.strokeStyle = COLOR;
   ctx.fillStyle = COLOR;
-  const keypointsArray = keypoints;
+  const keypointsArray = keypoints; // const pointFilter = idx => idx === 0 || idx === 2 || idx === 5 || idx === 9 || idx === 13 || idx === 17
+  // const pointFilter = idx => idx === 0 || idx === 4 || idx === 8 || idx === 12 || idx === 16 || idx === 20
 
   const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
 
@@ -26954,15 +26955,34 @@ async function normaliseImages(images, model, config) {
     const predictions = await model.estimateHands(img);
 
     if (predictions[0] && predictions[0].landmarks) {
+      //set c
+      // const centroid = getCentroid(
+      //    predictions[0].landmarks[0],
+      //    predictions[0].landmarks[2],
+      //    predictions[0].landmarks[5],
+      //    predictions[0].landmarks[9],
+      //    predictions[0].landmarks[13],
+      //    predictions[0].landmarks[17],
+      //    )
+      //set a
+      // const centroid = getCentroid(
+      //    predictions[0].landmarks[0],
+      //    predictions[0].landmarks[4],
+      //    predictions[0].landmarks[8],
+      //    predictions[0].landmarks[12],
+      //    predictions[0].landmarks[16],
+      //    predictions[0].landmarks[20],
+      //    )
+      // set b
       const centroid = getCentroid(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
       normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
       predictions[0].centroid = centroid; // draw to canvas
       // get canvas and draw
 
       const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
+      drawToCanvas(canvas, predictions, img, config.drawHandPoseOnData);
       poseData.push([canvas, predictions[0]]);
       const context = canvas.getContext('2d');
-      drawToCanvas(canvas, predictions, img, config.drawHandPoseOnData);
 
       if (config.drawHandPoseOnData) {
         (0, _drawing.drawPoint)(context, centroid[1], centroid[0], 4);
@@ -26991,7 +27011,13 @@ function copyImgFromCanvasToCanvas(canvasA, canvasB, topLeft, bottomRight) {
 
 function drawToCanvas(canvas, predictions, img, drawHandPoseOnData) {
   var context = canvas.getContext('2d');
-  if (img) context.drawImage(img, 0, 0);
+  if (img) context.drawImage(img, 0, 0); // context.drawImage(
+  //    img, 
+  //    predictions[0].boundingBox.topLeft[0], 
+  //    predictions[0].boundingBox.topLeft[1],
+  //    predictions[0].boundingBox.bottomRight[0] - predictions[0].boundingBox.topLeft[0],
+  //    predictions[0].boundingBox.bottomRight[1] - predictions[0].boundingBox.topLeft[1]
+  //     );
 
   if (predictions.length > 0 && drawHandPoseOnData) {
     const result = predictions[0].landmarks;
@@ -27019,7 +27045,7 @@ function getAngle(inputBone, matchBone) {
   return angle;
 }
 
-async function placeImage(ctx, prediction, matchIndex) {
+async function placeImage(ctx, prediction, matchIndex, options) {
   (0, _drawing.drawPoint)(ctx, prediction.centroid[1], prediction.centroid[0], 4);
   const userBone = [prediction.landmarks[0], prediction.centroid];
   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].centroid];
@@ -27029,10 +27055,9 @@ async function placeImage(ctx, prediction, matchIndex) {
   const translateMatchRootY = -poseData[matchIndex][1].landmarks[0][1];
   const angel = getAngle(userBone, matchBone);
   const userDistance = Math.sqrt(Math.pow(prediction.centroid[0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.centroid[1] - prediction.landmarks[0][1], 2));
-  console.log(userDistance);
   const matchDistance = Math.sqrt(Math.pow(poseData[matchIndex][1].centroid[0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].centroid[1] - poseData[matchIndex][1].landmarks[0][1], 2));
-  console.log(matchDistance);
-  const scale = userDistance / matchDistance; // draw im to mem canvas
+  const scale = userDistance / matchDistance;
+  console.log(scale); // draw im to mem canvas
   // memoryContext.drawImage(poseData[matchIndex][0],0,0);
   // const originContext = poseData[matchIndex][0].getContext('2d');
 
@@ -27044,8 +27069,12 @@ async function placeImage(ctx, prediction, matchIndex) {
   //    poseData[matchIndex][0],
   //    poseData[matchIndex][1].boundingBox.topLeft[0],
   //    poseData[matchIndex][1].boundingBox.topLeft[1],
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[0] - poseData[matchIndex][1].boundingBox.topLeft[0]),
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]),
+  //    (poseData[matchIndex][1].landmarks[0][0] * scale) - prediction.landmarks[0][0] + prediction.boundingBox.topLeft[0],
+  //    (poseData[matchIndex][1].landmarks[0][1] * scale) - prediction.landmarks[0][1] + prediction.boundingBox.topLeft[1],
   //    (poseData[matchIndex][1].boundingBox.bottomRight[0] - poseData[matchIndex][1].boundingBox.topLeft[0]) * scale,
-  //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]) * scale,
+  //    (poseData[matchIndex][1].boundingBox.bottomRight[1] - poseData[matchIndex][1].boundingBox.topLeft[1]) * scale
   //    );
 
   ctx.translate(-translateMatchRootX * scale, -translateMatchRootY * scale);
@@ -27102,8 +27131,10 @@ const mobile = utils.isMobile();
 const state = {};
 state.confidence = 0.5;
 state.flip = false;
-state.drawHandPoseOnData = false;
+state.drawHandPoseOnData = true;
 state.opacity = 0.6;
+state.xOffset = 0;
+state.yOffset = 0;
 let model;
 let imagesAndPoses;
 let globalCtx;
@@ -27155,14 +27186,18 @@ function setupDatGui(state) {
   gui.add(state, "opacity", 0, 1).onChange(sliderValue => {
     state.opacity = sliderValue;
     if (globalCtx) globalCtx.globalAlpha = sliderValue;
+  }); //xOffset
+
+  gui.add(state, "xOffset", -400, 400).onChange(sliderValue => {
+    state.xOffset = sliderValue;
+  }); //yOffset
+
+  gui.add(state, "xOffset", -400, 400).onChange(sliderValue => {
+    state.yOffset = sliderValue;
   }); // add hand
 
   gui.add(state, "addHands").onChange(flip => {
     state.addHands = flip;
-  }); // source image ratio diffrence
-
-  gui.add(state, "sourceRatio", 0, 5).onChange(sliderValue => {
-    state.ratio = sliderValue;
   }); // source image ratio diffrence
 
   gui.add(state, "drawHandPose").onChange(val => {
@@ -27219,7 +27254,7 @@ const landmarksRealTime = async video => {
       if (state.drawHandPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
 
       const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex);
+      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
     }
 
     stats.end();
