@@ -27046,7 +27046,7 @@ function getAngle(inputBone, matchBone) {
 }
 
 async function placeImage(ctx, prediction, matchIndex, options) {
-  (0, _drawing.drawPoint)(ctx, prediction.centroid[1], prediction.centroid[0], 4);
+  // drawPoint(ctx, prediction.centroid[1], prediction.centroid[0], 4)
   const userBone = [prediction.landmarks[0], prediction.centroid];
   const matchBone = [poseData[matchIndex][1].landmarks[0], poseData[matchIndex][1].centroid];
   const translateRotateX = prediction.landmarks[0][0];
@@ -27056,8 +27056,7 @@ async function placeImage(ctx, prediction, matchIndex, options) {
   const angel = getAngle(userBone, matchBone);
   const userDistance = Math.sqrt(Math.pow(prediction.centroid[0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.centroid[1] - prediction.landmarks[0][1], 2));
   const matchDistance = Math.sqrt(Math.pow(poseData[matchIndex][1].centroid[0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].centroid[1] - poseData[matchIndex][1].landmarks[0][1], 2));
-  const scale = userDistance / matchDistance;
-  console.log(scale); // draw im to mem canvas
+  const scale = userDistance / matchDistance; // draw im to mem canvas
   // memoryContext.drawImage(poseData[matchIndex][0],0,0);
   // const originContext = poseData[matchIndex][0].getContext('2d');
 
@@ -27140,9 +27139,10 @@ const mobile = utils.isMobile();
 const state = {};
 state.confidence = 0.5;
 state.flip = false;
+state.drawInputPose = true;
 state.drawHandPoseOnData = false;
 state.opacity = 0.6;
-state.xOffset = 0; // (overlay transformations)
+state.drawDirection = true; // (overlay transformations)
 
 state.destinationIn = false;
 state.lighter = false;
@@ -27183,17 +27183,21 @@ function noCameraMessage(e) {
 function setupDatGui(state) {
   const gui = new dat.GUI();
   state.opacity = 0.6;
-  state.addHands = true;
+  state.drawDataPose = true;
   state.sourceRatio = 0.3;
   state.drawHandPose = true;
   if (globalCtx) globalCtx.globalAlpha = state.opacity;
-  const handSource = gui.addFolder('hand source'); //confidence bar
+  const handSource = gui.addFolder('pose estimation'); //confidence bar
 
   handSource.add(state, "confidence", 0, 1).onChange(async sliderValue => {
     state.confidence = sliderValue;
     model = await handpose.load({
       detectionConfidence: state.confidence
     });
+  }); // flip horizontally
+
+  handSource.add(state, "flip").onChange(flip => {
+    state.flip = flip;
   });
   const video = gui.addFolder('video'); //global alpha
 
@@ -27201,27 +27205,19 @@ function setupDatGui(state) {
     state.opacity = sliderValue;
     if (globalCtx) globalCtx.globalAlpha = sliderValue;
   });
-  const placement = gui.addFolder('placement'); // add hand
+  video.open();
+  const drawing = gui.addFolder('drawing'); // source image ratio diffrence
 
-  placement.add(state, "addHands").onChange(flip => {
-    state.addHands = flip;
-  }); //xOffset
-
-  placement.add(state, "xOffset", -400, 400).onChange(sliderValue => {
-    state.xOffset = sliderValue;
-  }); //yOffset
-
-  placement.add(state, "xOffset", -400, 400).onChange(sliderValue => {
-    state.yOffset = sliderValue;
+  drawing.add(state, "drawInputPose").onChange(val => {
+    state.drawInputPose = val;
   }); // source image ratio diffrence
 
-  placement.add(state, "drawHandPose").onChange(val => {
-    state.drawHandPose = val;
-  });
-  const drawing = gui.addFolder('drawing'); // flip horizontally
+  drawing.add(state, "drawDirection").onChange(val => {
+    state.drawDirection = val;
+  }); // add hand
 
-  drawing.add(state, "flip").onChange(flip => {
-    state.flip = flip;
+  drawing.add(state, "drawDataPose").onChange(flip => {
+    state.drawDataPose = flip;
   }); // draw data pose switch
 
   drawing.add(state, "drawHandPoseOnData").onChange(val => {
@@ -27230,6 +27226,7 @@ function setupDatGui(state) {
     cancelAnimationFrame(realtimeAnimationFrameRef);
     main();
   });
+  drawing.open();
   const blending = gui.addFolder('blending');
   blending.add(state, "multiply").onChange(bool => {
     state.multiply = bool;
@@ -27248,8 +27245,7 @@ function setupDatGui(state) {
   });
   blending.add(state, "overlay").onChange(bool => {
     state.overlay = bool;
-  });
-  blending.open();
+  }); // blending.open();
 }
 
 const landmarksRealTime = async video => {
@@ -27266,7 +27262,6 @@ const landmarksRealTime = async video => {
   canvas.height = videoHeight;
   const ctx = canvas.getContext("2d");
   globalCtx = ctx;
-  console.log(state.opacity);
   globalCtx.globalAlpha = state.opacity;
   video.width = videoWidth;
   video.height = videoHeight; // ctx.clearRect(0, 0, videoWidth, videoHeight);
@@ -27283,18 +27278,22 @@ const landmarksRealTime = async video => {
 
     if (predictions.length > 0) {
       const centroid = (0, _imagesData.getCentroid)(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
-      (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
-      ctx.strokeStyle = 'lightgreen';
-      ctx.lineWidth = 3;
-      (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 2;
+
+      if (state.drawDirection) {
+        (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
+        ctx.strokeStyle = 'lightgreen';
+        ctx.lineWidth = 3;
+        (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 2;
+      }
+
       predictions[0].centroid = centroid;
       const result = predictions[0].landmarks;
-      if (state.drawHandPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+      if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
 
       const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-      if (state.addHands) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
+      if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
     }
 
     stats.end();
