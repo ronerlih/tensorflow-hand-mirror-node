@@ -27063,11 +27063,15 @@ async function placeImage(ctx, prediction, matchIndex, options) {
 
   ctx.translate(translateRotateX, translateRotateY);
   ctx.rotate(-angel);
-  ctx.translate(translateMatchRootX * scale, translateMatchRootY * scale);
-  ctx.globalAlpha = 0.65; // ctx.globalCompositeOperation = 'destination-in';
-  // ctx.globalCompositeOperation = 'destination-atop';
-  // ctx.globalCompositeOperation = 'overlay';
+  ctx.translate(translateMatchRootX * scale, translateMatchRootY * scale); // ctx.globalAlpha = 0.65;
+  // (default source over)
 
+  if (options.overlay) ctx.globalCompositeOperation = 'overlay';
+  if (options.lighter) ctx.globalCompositeOperation = 'lighter';
+  if (options.multiply) ctx.globalCompositeOperation = 'multiply';
+  if (options.screen) ctx.globalCompositeOperation = 'screen';
+  if (options.softLight) ctx.globalCompositeOperation = 'soft-light';
+  if (options.difference) ctx.globalCompositeOperation = 'difference';
   (0, _drawing.drawPoint)(ctx, 0, 0, 5);
   ctx.drawImage(poseData[matchIndex][0], 0, 0, poseData[matchIndex][0].width * scale, poseData[matchIndex][0].height * scale); // ctx.drawImage(
   //    poseData[matchIndex][0],
@@ -27136,14 +27140,17 @@ const mobile = utils.isMobile();
 const state = {};
 state.confidence = 0.5;
 state.flip = false;
-state.drawHandPoseOnData = true;
+state.drawHandPoseOnData = false;
 state.opacity = 0.6;
-state.xOffset = 0;
-state.destinationIn = 0;
-state.destinationIn = 0;
-state.destinationIn = 0;
-state.destinationIn = 0;
-state.destinationIn = 0;
+state.xOffset = 0; // (overlay transformations)
+
+state.destinationIn = false;
+state.lighter = false;
+state.screen = false;
+state.softLight = false;
+state.multiply = false;
+state.overlay = false;
+state.difference = false;
 let model;
 let imagesAndPoses;
 let globalCtx;
@@ -27223,7 +27230,26 @@ function setupDatGui(state) {
     cancelAnimationFrame(realtimeAnimationFrameRef);
     main();
   });
-  gui.addFolder('blending');
+  const blending = gui.addFolder('blending');
+  blending.add(state, "multiply").onChange(bool => {
+    state.multiply = bool;
+  });
+  blending.add(state, "difference").onChange(bool => {
+    state.difference = bool;
+  });
+  blending.add(state, "lighter").onChange(bool => {
+    state.lighter = bool;
+  });
+  blending.add(state, "screen").onChange(bool => {
+    state.screen = bool;
+  });
+  blending.add(state, "softLight").onChange(bool => {
+    state.softLight = bool;
+  });
+  blending.add(state, "overlay").onChange(bool => {
+    state.overlay = bool;
+  });
+  blending.open();
 }
 
 const landmarksRealTime = async video => {
