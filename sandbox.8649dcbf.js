@@ -27275,7 +27275,7 @@ function transformDataImageInRelationToInput(inputBone, matchBone, matchPose) {
   // rotate closest match
   // sortedCanvas[0].style= `transform: rotate(1rad);`;
 
-  sortedCanvas[0].style = `transform: rotate(${angel}rad);`;
+  sortedCanvas[0].style = "transform: rotate(".concat(angel, "rad);");
   const inputCtx = inputCanvas.getContext('2d');
   inputCtx.scale(2, 2);
   inputCtx.translate(252, -88);
@@ -27339,7 +27339,7 @@ async function drawOnDatasetImages() {
     // get canvas and draw
 
 
-    const canvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
+    const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
     drawToCanvas(canvas, predictions, img);
 
     if (predictions[0]) {
@@ -27358,8 +27358,8 @@ async function handFoundPipeline(predictions, img) {
 
 async function cropAndResize(predictions, img) {
   // get cannvases
-  const newCanvas = document.querySelector(`#resized-${img.getAttribute('id')}`);
-  const originCanvas = document.querySelector(`#canvas-${img.getAttribute('id')}`);
+  const newCanvas = document.querySelector("#resized-".concat(img.getAttribute('id')));
+  const originCanvas = document.querySelector("#canvas-".concat(img.getAttribute('id')));
   const boundingBox = predictions[0].boundingBox; // console.log(boundingBox)
 
   copyImgFromCanvasToCanvas(originCanvas, newCanvas, boundingBox.topLeft, boundingBox.bottomRight);

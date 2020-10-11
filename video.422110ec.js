@@ -26490,6 +26490,12 @@ exports.VIDEO_HEIGHT = exports.VIDEO_WIDTH = void 0;
 const VIDEO_WIDTH = 1280;
 exports.VIDEO_WIDTH = VIDEO_WIDTH;
 const VIDEO_HEIGHT = 720; // used in index.js to resize hand
+// export const VIDEO_WIDTH = 1024;
+// export const VIDEO_HEIGHT = 576; // used in index.js to resize hand
+// export const VIDEO_WIDTH = 640;
+// export const VIDEO_HEIGHT = 480; // used in index.js to resize hand
+// export const VIDEO_WIDTH = 330;
+// export const VIDEO_HEIGHT = 240; // used in index.js to resize hand
 
 exports.VIDEO_HEIGHT = VIDEO_HEIGHT;
 
@@ -26512,6 +26518,7 @@ async function setupCamera(mobile) {
   video.srcObject = stream;
   return new Promise(resolve => {
     video.onloadedmetadata = () => {
+      console.log(video);
       resolve(video);
     };
   });
@@ -27466,6 +27473,8 @@ function getCentroid(...args) {
 
 var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
 
+var tf = _interopRequireWildcard(require("@tensorflow/tfjs-core"));
+
 var utils = _interopRequireWildcard(require("./utils"));
 
 var _drawing = require("./utils/drawing.js");
@@ -27498,10 +27507,11 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
  * limitations under the License.
  * =============================================================================
  */
-let videoWidth, videoHeight;
-const VIDEO_WIDTH = 640;
-const VIDEO_HEIGHT = 360;
+let videoWidth, videoHeight; // const VIDEO_WIDTH = 640;
+// const VIDEO_HEIGHT = 360;
+
 const mobile = utils.isMobile();
+const stats = new Stats();
 const state = {};
 state.confidence = 0.5;
 state.flip = false;
@@ -27518,19 +27528,36 @@ state.multiply = false;
 state.overlay = false;
 state.difference = false;
 let model;
+let estimationWorker;
 let globalCtx;
+let ctx;
 let realtimeAnimationFrameRef;
+const canvas = document.getElementById("output");
 
 const main = async () => {
   // get from local storage
+  if (window.Worker) {
+    estimationWorker = new Worker("/estimationWorker.fc753bd6.js");
+
+    estimationWorker.onerror = function (e) {
+      throw e;
+    };
+
+    estimationWorker.onmessage = estimationWorkerMessageHandler;
+  } else {
+    throw new Error('web workers not suppoted');
+  }
+
   console.time('load model');
+  estimationWorker.postMessage(['loadModel', state]); // load a global version of the model (TO-DO: is redundant)
+
   model = await handpose.load({
     detectionConfidence: state.confidence
-  });
-  console.timeEnd('load model');
-  console.time('imges and poses'); // build hand pool data
+  }); // build hand pool data
 
+  console.time('imges and poses');
   await (0, _imagesData.buildImagesData)(model, state);
+  console.timeEnd('imges and poses');
   let video;
   console.time('init video');
 
@@ -27599,24 +27626,25 @@ function setupDatGui(state) {
   });
   drawing.open();
   const blending = gui.addFolder('blending');
-  blending.add(state, "multiply").onChange(bool => {
-    state.multiply = bool;
-  });
-  blending.add(state, "difference").onChange(bool => {
-    state.difference = bool;
-  });
-  blending.add(state, "lighter").onChange(bool => {
-    state.lighter = bool;
+  blending.add(state, "overlay").onChange(bool => {
+    state.overlay = bool;
   });
   blending.add(state, "screen").onChange(bool => {
     state.screen = bool;
   });
+  blending.add(state, "multiply").onChange(bool => {
+    state.multiply = bool;
+  });
+  blending.add(state, "lighter").onChange(bool => {
+    state.lighter = bool;
+  });
   blending.add(state, "softLight").onChange(bool => {
     state.softLight = bool;
   });
-  blending.add(state, "overlay").onChange(bool => {
-    state.overlay = bool;
-  }); // blending.open();
+  blending.add(state, "difference").onChange(bool => {
+    state.difference = bool;
+  });
+  gui.close(); // blending.open();
 }
 
 const landmarksRealTime = async video => {
@@ -27626,15 +27654,13 @@ const landmarksRealTime = async video => {
   console.timeEnd('init gui');
   console.time('setup flandmarksRealTime'); // stats (frame rate)
 
-  const stats = new Stats();
   stats.showPanel(1);
   document.body.appendChild(stats.dom);
   videoWidth = video.videoWidth;
   videoHeight = video.videoHeight;
-  const canvas = document.getElementById("output");
   canvas.width = videoWidth;
   canvas.height = videoHeight;
-  const ctx = canvas.getContext("2d");
+  ctx = canvas.getContext("2d");
   globalCtx = ctx;
   globalCtx.globalAlpha = state.opacity;
   video.width = videoWidth;
@@ -27646,40 +27672,82 @@ const landmarksRealTime = async video => {
   ctx.scale(-1, 1); // console.log(imagesAndPoses)
 
   console.timeEnd('setup flandmarksRealTime');
-
-  async function frameLandmarks() {
-    stats.begin();
-    ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-    const predictions = await model.estimateHands(video, state.flip);
-
-    if (predictions.length > 0) {
-      const centroid = (0, _imagesData.getCentroid)(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
-
-      if (state.drawDirection) {
-        (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
-        ctx.strokeStyle = 'lightgreen';
-        ctx.lineWidth = 3;
-        (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-      }
-
-      predictions[0].centroid = centroid;
-      const result = predictions[0].landmarks;
-      if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
-
-      const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-      if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
-    }
-
-    stats.end();
-    realtimeAnimationFrameRef = requestAnimationFrame(frameLandmarks);
-  }
-
   frameLandmarks();
 };
 
+async function frameLandmarks() {
+  stats.begin();
+  ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
+  const predictions = await model.estimateHands(video, state.flip);
+
+  if (predictions.length > 0) {
+    const landmarks = predictions[0].landmarks;
+    const centroid = (0, _imagesData.getCentroid)(landmarks[0], landmarks[2], landmarks[5], landmarks[17]);
+
+    if (state.drawDirection) {
+      (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
+      ctx.strokeStyle = 'lightgreen';
+      ctx.lineWidth = 3;
+      (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+    }
+
+    predictions[0].centroid = centroid;
+    const result = predictions[0].landmarks;
+    if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+
+    const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
+    if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
+  }
+
+  stats.end();
+  realtimeAnimationFrameRef = requestAnimationFrame(frameLandmarks);
+}
+
+function estimationWorkerMessageHandler(eMsg) {
+  switch (eMsg.data[0]) {
+    case 'ready':
+      return modelReady();
+
+    case 'predictions':
+      return handlePredictions(eMsg.data[1]);
+
+    default:
+      return (() => console.log('worker on default switch'))();
+  }
+}
+
+function modelReady() {
+  console.timeEnd('load model');
+}
+
+async function handlePredictions(predictions) {
+  if (predictions.length > 0) {
+    const centroid = (0, _imagesData.getCentroid)(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
+
+    if (state.drawDirection) {
+      (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
+      ctx.strokeStyle = 'lightgreen';
+      ctx.lineWidth = 3;
+      (0, _drawing.drawPath)(ctx, [predictions[0].landmarks[0], centroid], false);
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 2;
+    }
+
+    predictions[0].centroid = centroid;
+    const result = predictions[0].landmarks;
+    if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+
+    const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
+    if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
+  }
+
+  stats.end();
+  realtimeAnimationFrameRef = requestAnimationFrame(frameLandmarks);
+}
+
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 main();
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js"}]},{},["video.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js","./workers/estimationWorker.js":[["estimationWorker.fc753bd6.js","workers/estimationWorker.js"],"estimationWorker.fc753bd6.js.map","workers/estimationWorker.js"]}]},{},["video.js"], null)
 //# sourceMappingURL=/video.422110ec.js.map
