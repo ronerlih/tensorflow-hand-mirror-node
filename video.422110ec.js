@@ -575,7 +575,7 @@ module.exports = Array.isArray || function (arr) {
   return toString.call(arr) == '[object Array]';
 };
 
-},{}],"node_modules/buffer/index.js":[function(require,module,exports) {
+},{}],"node_modules/node-libs-browser/node_modules/buffer/index.js":[function(require,module,exports) {
 
 var global = arguments[3];
 /*!
@@ -2368,7 +2368,7 @@ function isnan (val) {
   return val !== val // eslint-disable-line no-self-compare
 }
 
-},{"base64-js":"node_modules/base64-js/index.js","ieee754":"node_modules/ieee754/index.js","isarray":"node_modules/isarray/index.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js":[function(require,module,exports) {
+},{"base64-js":"node_modules/base64-js/index.js","ieee754":"node_modules/ieee754/index.js","isarray":"node_modules/isarray/index.js","buffer":"node_modules/node-libs-browser/node_modules/buffer/index.js"}],"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js":[function(require,module,exports) {
 var global = arguments[3];
 var process = require("process");
 var Buffer = require("buffer").Buffer;
@@ -20261,7 +20261,7 @@ wt.prototype.add = function (t) {
 }, wt.prototype.batchNorm = function (t, e, n, r, o) {
   return nc(this, t, e, n, r, o);
 }, xt = ff;
-},{"crypto":"node_modules/parcel-bundler/src/builtins/_empty.js","node-fetch":"node_modules/parcel-bundler/src/builtins/_empty.js","util":"node_modules/parcel-bundler/src/builtins/_empty.js","process":"node_modules/process/browser.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js":[function(require,module,exports) {
+},{"crypto":"node_modules/parcel-bundler/src/builtins/_empty.js","node-fetch":"node_modules/parcel-bundler/src/builtins/_empty.js","util":"node_modules/parcel-bundler/src/builtins/_empty.js","process":"node_modules/process/browser.js","buffer":"node_modules/node-libs-browser/node_modules/buffer/index.js"}],"node_modules/@tensorflow/tfjs-converter/dist/tf-converter.esm.js":[function(require,module,exports) {
 var Buffer = require("buffer").Buffer;
 "use strict";
 
@@ -25890,7 +25890,7 @@ function loadGraphModel(e, t) {
 
 var version = "1.7.4";
 exports.version_converter = version;
-},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","buffer":"node_modules/buffer/index.js"}],"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js":[function(require,module,exports) {
+},{"@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","buffer":"node_modules/node-libs-browser/node_modules/buffer/index.js"}],"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -27272,7 +27272,9 @@ function findSimilar(currentUserPose) {
 
   return closestMatchIndex;
 }
-},{"compute-cosine-similarity":"node_modules/compute-cosine-similarity/lib/index.js","vptree":"node_modules/vptree/vptree.js"}],"utils/imagesData.js":[function(require,module,exports) {
+},{"compute-cosine-similarity":"node_modules/compute-cosine-similarity/lib/index.js","vptree":"node_modules/vptree/vptree.js"}],"data/imagePaths.json":[function(require,module,exports) {
+module.exports = ["/border/01.jpg", "/border/02.jpg"];
+},{}],"utils/imagesData.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -27288,7 +27290,18 @@ var _drawing = require("./drawing.js");
 
 var _findSimilarVideo = require("./findSimilarVideo");
 
+var _imagePaths = _interopRequireDefault(require("../data/imagePaths.json"));
+
+var fs = _interopRequireWildcard(require("fs"));
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || typeof obj !== "object" && typeof obj !== "function") { return { default: obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj.default = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 // import  imagesToTensors from "./imagesToTensors";
+const imagesContainer = document.querySelector('#images');
 let normalisedPoses = [];
 const poseData = []; //  in-memory canvas to transfor hand img
 
@@ -27297,8 +27310,21 @@ mCanvas.width = 300;
 mCanvas.height = 300;
 const memoryContext = mCanvas.getContext('2d');
 
+(function loadImagesToDom() {
+  const images = _imagePaths.default.map(filename => new Promise((res, rej) => {
+    const image = new Image();
+    image.src = "data" + filename;
+
+    image.onload = () => res();
+
+    imagesContainer.appendChild(image);
+  }));
+
+  Promise.all(images);
+})();
+
 async function buildImagesData(model, config) {
-  const images = document.querySelector('#images').children; // const imagesTensors = imagesToTensors();
+  let images = document.querySelector('#images').children; // const imagesTensors = imagesToTensors();
   // console.log(imagesTensors)
 
   const imagesAndPoses = await normaliseImages(images, model, config);
@@ -27325,6 +27351,56 @@ async function normaliseImages(images, model, config) {
   for (let [i, img] of [...images].entries()) {
     // get prediction
     const predictions = await model.estimateHands(img);
+
+    if (predictions[0] && predictions[0].landmarks) {
+      //set c
+      // const centroid = getCentroid(
+      //    predictions[0].landmarks[0],
+      //    predictions[0].landmarks[2],
+      //    predictions[0].landmarks[5],
+      //    predictions[0].landmarks[9],
+      //    predictions[0].landmarks[13],
+      //    predictions[0].landmarks[17],
+      //    )
+      //set a
+      // const centroid = getCentroid(
+      //    predictions[0].landmarks[0],
+      //    predictions[0].landmarks[4],
+      //    predictions[0].landmarks[8],
+      //    predictions[0].landmarks[12],
+      //    predictions[0].landmarks[16],
+      //    predictions[0].landmarks[20],
+      //    )
+      // set b
+      const centroid = getCentroid(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
+      normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
+      predictions[0].centroid = centroid; // draw to canvas
+      // get canvas and draw
+
+      const canvas = document.querySelector("#canvas-".concat(img.getAttribute('id'))); // canvasFromTensor()
+
+      drawToCanvas(canvas, predictions, img, config.drawHandPoseOnData);
+      poseData.push([canvas, predictions[0]]);
+      const context = canvas.getContext('2d');
+
+      if (config.drawHandPoseOnData) {
+        (0, _drawing.drawPoint)(context, centroid[1], centroid[0], 4);
+        (0, _drawing.drawPath)(context, [predictions[0].landmarks[0], centroid], false);
+      } // canvas.boundingBox =  predictions[0].boundingBox
+      // handFoundPipeline(predictions, img)
+
+    }
+  }
+
+  return poseData;
+}
+
+async function normaliseImagesFromFiles(images, model, config) {
+  for (let [i, img] of [...images].entries()) {
+    console.log(img); // get prediction
+
+    const predictions = await model.estimateHands(image);
+    console.log(predictions);
 
     if (predictions[0] && predictions[0].landmarks) {
       //set c
@@ -27468,7 +27544,7 @@ function getCentroid(...args) {
   const [sumX, sumY] = args.reduce((sums, point) => [sums[0] + point[0], sums[1] + point[1]], [0, 0]);
   return [sumX / args.length, sumY / args.length];
 }
-},{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js"}],"video.js":[function(require,module,exports) {
+},{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js","../data/imagePaths.json":"data/imagePaths.json","fs":"node_modules/parcel-bundler/src/builtins/_empty.js"}],"video.js":[function(require,module,exports) {
 "use strict";
 
 var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
