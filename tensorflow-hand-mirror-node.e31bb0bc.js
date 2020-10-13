@@ -26412,8 +26412,9 @@ var _fingers = require("./fingers.js");
 // const COLOR = "lightgreen";
 const COLOR = "black";
 const HIGHLIGHT_COLOR = "blue";
+const HAND_COLOR = "white";
 const POINT_SIZE = 3;
-const HIGHLIGHT_POINT_SIZE = 6;
+const HIGHLIGHT_POINT_SIZE = 2;
 
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
@@ -26430,27 +26431,28 @@ function drawPointAnnotation(ctx, y, x, r, text, color) {
 }
 
 function drawKeypoints(ctx, keypoints) {
-  ctx.strokeStyle = COLOR;
-  ctx.fillStyle = COLOR;
+  //  ctx.strokeStyle = COLOR;
+  //  ctx.fillStyle = COLOR;
+  ctx.strokeStyle = HAND_COLOR;
+  ctx.fillStyle = HAND_COLOR;
+  ctx.lineWidth = HIGHLIGHT_POINT_SIZE;
   const keypointsArray = keypoints; // const pointFilter = idx => idx === 0 || idx === 2 || idx === 5 || idx === 9 || idx === 13 || idx === 17
   // const pointFilter = idx => idx === 0 || idx === 4 || idx === 8 || idx === 12 || idx === 16 || idx === 20
 
-  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
+  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2; // for (let i = 0; i < keypointsArray.length; i++) {
+  //    if(pointFilter(i)){
+  //       ctx.strokeStyle = HIGHLIGHT_COLOR;
+  //       ctx.fillStyle = HIGHLIGHT_COLOR;
+  //    }else{
+  //       ctx.strokeStyle = COLOR;
+  //       ctx.fillStyle = COLOR;
+  //    }
+  //   const y = keypointsArray[i][0];
+  //   const x = keypointsArray[i][1];
+  //   drawPoint(ctx, x , y , pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+  //   drawPointAnnotation(ctx, x, y, 0, i)
+  // }
 
-  for (let i = 0; i < keypointsArray.length; i++) {
-    if (pointFilter(i)) {
-      ctx.strokeStyle = HIGHLIGHT_COLOR;
-      ctx.fillStyle = HIGHLIGHT_COLOR;
-    } else {
-      ctx.strokeStyle = COLOR;
-      ctx.fillStyle = COLOR;
-    }
-
-    const y = keypointsArray[i][0];
-    const x = keypointsArray[i][1];
-    drawPoint(ctx, x, y, pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
-    drawPointAnnotation(ctx, x, y, 0, i);
-  }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
 
@@ -26518,7 +26520,6 @@ async function setupCamera(mobile) {
   video.srcObject = stream;
   return new Promise(resolve => {
     video.onloadedmetadata = () => {
-      console.log(video);
       resolve(video);
     };
   });

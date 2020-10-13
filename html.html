@@ -1,0 +1,563 @@
+<!-- Copyright 2020 Google LLC. All Rights Reserved.
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+       http://www.apache.org/licenses/LICENSE-2.0
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+   ==============================================================================-->
+   
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1.0, user-scalable=no">
+   <!-- Load three.js -->
+   <script src="https://cdn.jsdelivr.net/npm/three@0.106.2/build/three.min.js"></script>
+   <!-- Load scatter-gl.js -->
+   <!-- TODO(annxingyuan): Submit a PR to scatter-gl that allows polylines to update in the render loop. -->
+   <script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script>
+   <!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
+   <style>:root { overflow-x: hidden;}
+     #canvas-wrapper {
+       margin: auto ;
+       margin-top: 20px;
+       display: block;
+       text-align: center;
+     }
+     #canvas-wrapper, #scatter-gl-container {
+       /* display: inline-block; */
+       vertical-align: top;
+     }
+     #info { text-align: center;}
+     #output, #scatter-gl-container, #scatter-gl-container > *{
+       width: 100%;
+       max-width: 1280px;
+     }
+     #scatter-gl-container, #scatter-gl-container > * {
+       width:auto!important;
+     }</style>
+   <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+   
+   <body>
+     <div id="info"> 
+       <p>
+          <strong>Hand dance sandbox 👋 (rehearsal page)</strong>
+          <a href="/index.html">hand pose video test</a>
+          <a href="/sandbox.html">images tests</a></p>
+       
+     </div>
+    
+     <div id="predictions"></div>
+     <div id="canvas-wrapper">
+       <canvas id="output"></canvas>
+       <video id="video" playsinline="" style="
+       -webkit-transform: scaleX(-1);
+       transform: scaleX(-1);
+       visibility: hidden;
+       width: auto;
+       height: auto;
+       position: absolute;
+       ">
+     </video>
+     </div>
+     <div id="scatter-gl-container"></div>
+     <h4>data images poses</h4>
+     
+      <h4>data images</h4>
+      <div id="images">
+
+<!-- <img src="./data/formatted2/114.jpg" id="038" alt="data-img" /> -->
+<img src="/115.87ff878d.jpg" id="039" alt="data-img">
+<img src="/116.cba310cc.jpg" id="040" alt="data-img">
+<img src="/118.2a979d94.jpg" id="042" alt="data-img">
+<img src="/119.48f13956.jpg" id="043" alt="data-img">
+<!-- <img src="./data/formatted2/120.jpg" id="044" alt="data-img" /> -->
+<img src="/121.95928c51.jpg" id="045" alt="data-img">
+<img src="/122.49bf89b7.jpg" id="046" alt="data-img">
+<img src="/123.5d57a780.jpg" id="047" alt="data-img">
+<img src="/124.64c75e27.jpg" id="048" alt="data-img">
+<img src="/125.fc3c9083.jpg" id="049" alt="data-img">
+<img src="/126.6f9f9f83.jpg" id="050" alt="data-img">
+<img src="/127.05560fcb.jpg" id="051" alt="data-img">
+<img src="/128.fb8df0d5.jpg" id="052" alt="data-img">
+<img src="/129.62c84ca1.jpg" id="053" alt="data-img">
+<img src="/130.22d5884b.jpg" id="054" alt="data-img">
+<img src="/131.984a6ab2.jpg" id="055" alt="data-img">
+<img src="/132.bab4b128.jpg" id="056" alt="data-img">
+<img src="/133.72a7a42c.jpg" id="057" alt="data-img">
+<img src="/134.62924d96.jpg" id="058" alt="data-img">
+<img src="/135.d7a7880d.jpg" id="059" alt="data-img">
+<img src="/136.3140080d.jpg" id="060" alt="data-img">
+<img src="/137.7e4f3d4c.jpg" id="061" alt="data-img">
+<img src="/138.b678fa08.jpg" id="062" alt="data-img">
+<img src="/139.9feccc3c.jpg" id="063" alt="data-img">
+<img src="/140.7fe81444.jpg" id="064" alt="data-img">
+<img src="/141.4f3f865e.jpg" id="065" alt="data-img">
+<img src="/142.2869f850.jpg" id="066" alt="data-img">
+<img src="/143.2431bf03.jpg" id="067" alt="data-img">
+<img src="/144.eda2c61c.jpg" id="068" alt="data-img">
+<img src="/145.066a4dfb.jpg" id="069" alt="data-img">
+<img src="/146.4d0e9823.jpg" id="070" alt="data-img">
+<img src="/147.1d5f526f.jpg" id="071" alt="data-img">
+<img src="/148.fd32aeca.jpg" id="072" alt="data-img">
+<img src="/149.cb933a02.jpg" id="073" alt="data-img">
+<img src="/150.84bcb01a.jpg" id="074" alt="data-img">
+<img src="/151.5c00ae62.jpg" id="075" alt="data-img">
+<img src="/152.2e0dcf4a.jpg" id="076" alt="data-img">
+<img src="/153.74ddce70.jpg" id="077" alt="data-img">
+<img src="/154.f6fd7cdf.jpg" id="078" alt="data-img">
+<img src="/155.6cc1c401.jpg" id="079" alt="data-img">
+<!-- <img src="./data/formatted2/156.jpg" id="080" alt="data-img" /> -->
+<img src="/157.5da6f9f8.jpg" id="081" alt="data-img">
+<img src="/158.8b8fb8cc.jpg" id="082" alt="data-img">
+<img src="/159.b4f0af8c.jpg" id="083" alt="data-img">
+<img src="/160.3dbea248.jpg" id="084" alt="data-img">
+<img src="/161.7e247a35.jpg" id="085" alt="data-img">
+<img src="/162.7cc342d2.jpg" id="086" alt="data-img">
+<!-- <img src="./data/formatted2/163.jpg" id="087" alt="data-img" /> -->
+<!-- <img src="./data/formatted2/164.jpg" id ="088" alt="data-img" /> -->
+<img src="/165.e405696e.jpg" id="089" alt="data-img">
+<img src="/166.e67ee73b.jpg" id="090" alt="data-img">
+<img src="/167.f056e4e3.jpg" id="091" alt="data-img">
+<img src="/168.3ff9c02f.jpg" id="092" alt="data-img">
+<img src="/169.f733a8af.jpg" id="093" alt="data-img">
+<img src="/170.6bc2e53d.jpg" id="094" alt="data-img">
+<img src="/171.8048c804.jpg" id="095" alt="data-img">
+<img src="/172.09f18476.jpg" id="096" alt="data-img">
+<img src="/173.19da33da.jpg" id="097" alt="data-img">
+<img src="/174.5d2e8e21.jpg" id="098" alt="data-img">
+<img src="/175.23632900.jpg" id="099" alt="data-img">
+<img src="/176.1a5a5a76.jpg" id="100" alt="data-img">
+<img src="/177.ccb3d16a.jpg" id="101" alt="data-img">
+<img src="/178.f32189ce.jpg" id="102" alt="data-img">
+<img src="/179.971f22a7.jpg" id="103" alt="data-img">
+<img src="/180.aa68a4dd.jpg" id="104" alt="data-img">
+<img src="/181.95544901.jpg" id="105" alt="data-img">
+<img src="/182.1a37a5c0.jpg" id="106" alt="data-img">
+<img src="/183.aaa58bb3.jpg" id="107" alt="data-img">
+<img src="/184.97a8480a.jpg" id="108" alt="data-img">
+<img src="/185.b53a966b.jpg" id="109" alt="data-img">
+<img src="/186.9507ff0f.jpg" id="110" alt="data-img">
+<img src="/187.2dd983bb.jpg" id="111" alt="data-img">
+<img src="/188.cb8b35c2.jpg" id="112" alt="data-img">
+<img src="/189.203e1a23.jpg" id="113" alt="data-img">
+<img src="/190.b75b811d.jpg" id="114" alt="data-img">
+<img src="/191.2b622393.jpg" id="115" alt="data-img">
+<img src="/192.998c447f.jpg" id="116" alt="data-img">
+<img src="/193.eb579051.jpg" id="117" alt="data-img">
+<img src="/194.7e4d9699.jpg" id="118" alt="data-img">
+<img src="/195.60885958.jpg" id="119" alt="data-img">
+<img src="/196.5f4f4690.jpg" id="120" alt="data-img">
+<img src="/197.9e2b189a.jpg" id="121" alt="data-img">
+<img src="/198.4dbef587.jpg" id="122" alt="data-img">
+<img src="/199.e001c112.jpg" id="123" alt="data-img">
+<img src="/200.0686bb26.jpg" id="124" alt="data-img">
+<img src="/201.ad20f565.jpg" id="125" alt="data-img">
+<img src="/202.a85965d2.jpg" id="126" alt="data-img">
+<img src="/203.bb9c053c.jpg" id="127" alt="data-img">
+<img src="/204.e275f837.jpg" id="128" alt="data-img">
+<img src="/205.873659b5.jpg" id="129" alt="data-img">
+<img src="/206.a061582e.jpg" id="130" alt="data-img">
+<img src="/207.a0bd541a.jpg" id="131" alt="data-img">
+<img src="/208.10c1e84d.jpg" id="132" alt="data-img">
+<img src="/209.699462dc.jpg" id="133" alt="data-img">
+<img src="/210.292e57f7.jpg" id="134" alt="data-img">
+<img src="/211.fa4609ac.jpg" id="135" alt="data-img">
+<img src="/212.4da2b9d6.jpg" id="136" alt="data-img">
+<img src="/213.8983b499.jpg" id="137" alt="data-img">
+<img src="/214.000882ad.jpg" id="138" alt="data-img">
+<img src="/215.87b4951b.jpg" id="139" alt="data-img">
+<img src="/216.51b4a092.jpg" id="140" alt="data-img">
+<img src="/217.9904144a.jpg" id="141" alt="data-img">
+<img src="/218.11950779.jpg" id="142" alt="data-img">
+<img src="/219.5b49579e.jpg" id="143" alt="data-img">
+<img src="/220.dc6938cd.jpg" id="144" alt="data-img">
+<img src="/221.bcd47346.jpg" id="145" alt="data-img">
+<img src="/222.43ac49b8.jpg" id="146" alt="data-img">
+<img src="/223.ead1ba3c.jpg" id="147" alt="data-img">
+<img src="/224.0fe86029.jpg" id="148" alt="data-img">
+<img src="/117.5b440a65.jpg" id="041" alt="data-img">
+<img src="/225.1fc5d903.jpg" id="149" alt="data-img">
+<img src="/226.6fd8c1fe.jpg" id="150" alt="data-img">
+<img src="/227.23b13e77.jpg" id="151" alt="data-img">
+<img src="/228.7dabd1dc.jpg" id="152" alt="data-img">
+<img src="/229.c7a5ad25.jpg" id="153" alt="data-img">
+<img src="/230.6319ef64.jpg" id="154" alt="data-img">
+<img src="/231.a9171445.jpg" id="155" alt="data-img">
+<img src="/232.9e39f212.jpg" id="156" alt="data-img">
+<img src="/233.bf3cfe8a.jpg" id="157" alt="data-img">
+<img src="/234.a82a3a39.jpg" id="158" alt="data-img">
+<img src="/235.532616f2.jpg" id="159" alt="data-img">
+<img src="/236.aeaecfef.jpg" id="160" alt="data-img">
+<img src="/237.2ae3a996.jpg" id="161" alt="data-img">
+<img src="/238.8a988cdb.jpg" id="162" alt="data-img">
+<img src="/239.0b3cdfcd.jpg" id="163" alt="data-img">
+<img src="/240.851caa2e.jpg" id="164" alt="data-img">
+<img src="/241.f9b66b06.jpg" id="165" alt="data-img">
+<img src="/242.855e0578.jpg" id="166" alt="data-img">
+<img src="/243.9593cbd7.jpg" id="167" alt="data-img">
+<img src="/244.66d8c82f.jpg" id="168" alt="data-img">
+<img src="/245.e0050782.jpg" id="169" alt="data-img">
+<img src="/246.c36b05f8.jpg" id="170" alt="data-img">
+<img src="/247.b886054d.jpg" id="171" alt="data-img">
+<img src="/248.95bcb0a3.jpg" id="172" alt="data-img">
+<!-- <img src="./data/formatted2/249.jpg" id="173" alt="data-img" /> -->
+<img src="/250.2f527b2a.jpg" id="174" alt="data-img">
+<img src="/251.f456163e.jpg" id="175" alt="data-img">
+<img src="/252.166dc3dd.jpg" id="176" alt="data-img">
+<img src="/253.72141c32.jpg" id="177" alt="data-img">
+<img src="/254.81305737.jpg" id="178" alt="data-img">
+<img src="/255.d8573d3c.jpg" id="179" alt="data-img">
+<img src="/256.ab0835eb.jpg" id="180" alt="data-img">
+<img src="/257.5ec99a4b.jpg" id="181" alt="data-img">
+<img src="/258.b7fe0d3e.jpg" id="182" alt="data-img">
+<img src="/259.d957a0dc.jpg" id="183" alt="data-img">
+<img src="/260.372f05e7.jpg" id="184" alt="data-img">
+<img src="/261.6acd247c.jpg" id="185" alt="data-img">
+<img src="/262.a6669cfe.jpg" id="186" alt="data-img">
+<img src="/263.901888eb.jpg" id="187" alt="data-img">
+<img src="/264.362648b8.jpg" id="188" alt="data-img">
+<img src="/265.abc448c1.jpg" id="189" alt="data-img">
+<img src="/266.869d0e3a.jpg" id="190" alt="data-img">
+<img src="/267.5e86313f.jpg" id="191" alt="data-img">
+<img src="/268.11d6ba3d.jpg" id="192" alt="data-img">
+<img src="/269.cd235c70.jpg" id="193" alt="data-img">
+<img src="/270.35040693.jpg" id="194" alt="data-img">
+<img src="/271.ef62756a.jpg" id="195" alt="data-img">
+<img src="/272.be3c31fa.jpg" id="196" alt="data-img">
+<img src="/273.d20bb4ce.jpg" id="197" alt="data-img">
+<img src="/274.d9955000.jpg" id="198" alt="data-img">
+<img src="/275.7eaf780d.jpg" id="199" alt="data-img">
+<img src="/276.5fd82105.jpg" id="200" alt="data-img">
+<img src="/277.244b18c6.jpg" id="201" alt="data-img">
+<img src="/278.63f07823.jpg" id="202" alt="data-img">
+<img src="/279.1712f0f8.jpg" id="203" alt="data-img">
+<img src="/280.bc4b2bbc.jpg" id="204" alt="data-img">
+<img src="/281.8a2c7564.jpg" id="205" alt="data-img">
+<img src="/282.35664ad5.jpg" id="206" alt="data-img">
+<img src="/283.01eab8c5.jpg" id="207" alt="data-img">
+<img src="/284.baa303aa.jpg" id="208" alt="data-img">
+<img src="/285.ffe23f27.jpg" id="209" alt="data-img">
+<img src="/286.7d759431.jpg" id="210" alt="data-img">
+<img src="/287.870c2252.jpg" id="211" alt="data-img">
+<img src="/288.50721910.jpg" id="212" alt="data-img">
+<img src="/289.05358843.jpg" id="213" alt="data-img">
+<img src="/290.6832f7ac.jpg" id="214" alt="data-img">
+<img src="/291.ac24bcce.jpg" id="215" alt="data-img">
+<img src="/292.ed273660.jpg" id="216" alt="data-img">
+<img src="/293.8436b3e8.jpg" id="217" alt="data-img">
+<img src="/294.f178f29f.jpg" id="218" alt="data-img">
+<img src="/295.b9edfe55.jpg" id="219" alt="data-img">
+<img src="/296.794d5243.jpg" id="220" alt="data-img">
+<!-- <img src="./data/formatted2/297.jpg" id="221" alt="data-img" /> -->
+<img src="/298.df89b357.jpg" id="222" alt="data-img">
+<img src="/299.3a91347a.jpg" id="223" alt="data-img">
+<img src="/300.9ddcd85c.jpg" id="224" alt="data-img">
+<img src="/301.6a74f692.jpg" id="225" alt="data-img">
+<img src="/302.6a744f41.jpg" id="226" alt="data-img">
+<img src="/303.65e769e5.jpg" id="227" alt="data-img">
+<img src="/304.5da823ce.jpg" id="228" alt="data-img">
+<img src="/305.7790cc2a.jpg" id="229" alt="data-img">
+<img src="/306.87f0b1a7.jpg" id="230" alt="data-img">
+<img src="/307.f3cabc4c.jpg" id="231" alt="data-img">
+<img src="/308.5c454bd2.jpg" id="232" alt="data-img">
+<img src="/309.3c56729a.jpg" id="233" alt="data-img">
+<img src="/310.5d37292e.jpg" id="234" alt="data-img">
+<img src="/311.239ba811.jpg" id="235" alt="data-img">
+<img src="/312.0d8fba58.jpg" id="236" alt="data-img">
+<img src="/313.f817e8a5.jpg" id="237" alt="data-img">
+<img src="/314.ceb48dd3.jpg" id="238" alt="data-img">
+<img src="/315.97de8c3c.jpg" id="239" alt="data-img">
+<img src="/316.0fc473ad.jpg" id="240" alt="data-img">
+<img src="/317.310d27a6.jpg" id="241" alt="data-img">
+<img src="/318.dc2aee67.jpg" id="242" alt="data-img">
+<img src="/319.5395103d.jpg" id="243" alt="data-img">
+<img src="/320.e32ca220.jpg" id="244" alt="data-img">
+<img src="/321.94fbcf40.jpg" id="245" alt="data-img">
+<img src="/322.b4adc743.jpg" id="246" alt="data-img">
+<img src="/323.e2fbd9da.jpg" id="247" alt="data-img">
+<img src="/324.218c2309.jpg" id="248" alt="data-img">
+<img src="/325.fe0bb332.jpg" id="249" alt="data-img">
+<img src="/326.6ad581c6.jpg" id="250" alt="data-img">
+<img src="/327.87197416.jpg" id="251" alt="data-img">
+<img src="/328.0057e1ae.jpg" id="252" alt="data-img">
+<img src="/329.7154dcd3.jpg" id="253" alt="data-img">
+<img src="/330.1e003161.jpg" id="254" alt="data-img">
+<img src="/331.62238225.jpg" id="255" alt="data-img">
+<img src="/332.a0366a76.jpg" id="256" alt="data-img">
+<img src="/333.4b52a457.jpg" id="257" alt="data-img">
+<img src="/334.a1c7fd00.jpg" id="258" alt="data-img">
+<img src="/335.900b3761.jpg" id="259" alt="data-img">
+<img src="/336.f91f4410.jpg" id="260" alt="data-img">
+<img src="/337.3c09f767.jpg" id="261" alt="data-img">
+<img src="/338.54214d98.jpg" id="262" alt="data-img">
+<img src="/339.0346763c.jpg" id="263" alt="data-img">
+<img src="/340.6c77e04b.jpg" id="264" alt="data-img">
+<img src="/341.01002a5c.jpg" id="265" alt="data-img">
+<img src="/342.45767dd5.jpg" id="266" alt="data-img">
+<img src="/343.3a7be362.jpg" id="267" alt="data-img">
+<img src="/344.2edb2eca.jpg" id="268" alt="data-img">
+<img src="/345.bf677c21.jpg" id="269" alt="data-img">
+<img src="/346.28ae2879.jpg" id="270" alt="data-img">
+<img src="/347.18b6ec3d.jpg" id="271" alt="data-img">
+<img src="/348.97c87eef.jpg" id="272" alt="data-img">
+<img src="/349.f9ba75e1.jpg" id="273" alt="data-img">
+<img src="/350.ac55cbae.jpg" id="274" alt="data-img">
+<img src="/351.eee8ba13.jpg" id="275" alt="data-img">
+<img src="/352.64ad2551.jpg" id="276" alt="data-img">
+<img src="/353.1bb0da22.jpg" id="277" alt="data-img">
+<img src="/354.1d5ae2aa.jpg" id="278" alt="data-img">
+<!-- <img src="./data/formatted2/355.jpg" id="279" alt="data-img" /> -->
+<img src="/356.8403370d.jpg" id="280" alt="data-img">
+<img src="/357.2cc18233.jpg" id="281" alt="data-img">
+<img src="/358.0bddcfcb.jpg" id="282" alt="data-img">
+<img src="/359.b9319611.jpg" id="283" alt="data-img">
+<img src="/360.e2ca807d.jpg" id="284" alt="data-img">
+<img src="/361.7fcba3e3.jpg" id="285" alt="data-img">
+<img src="/362.8fdc0d42.jpg" id="286" alt="data-img">
+<!-- <img src="./data/formatted2/363.jpg" id="287" alt="data-img" /> -->
+<img src="/364.88f0cb4f.jpg" id="288" alt="data-img">
+<img src="/365.2387ed8d.jpg" id="289" alt="data-img">
+<img src="/366.053e4f7a.jpg" id="290" alt="data-img">
+<img src="/367.4be7d5eb.jpg" id="291" alt="data-img">
+<img src="/368.dcd7f5a4.jpg" id="292" alt="data-img">
+<img src="/369.bbc4d390.jpg" id="293" alt="data-img">
+<img src="/370.f58035ef.jpg" id="294" alt="data-img">
+<img src="/371.b0496e04.jpg" id="295" alt="data-img">
+<img src="/372.dcd20bba.jpg" id="296" alt="data-img">
+<img src="/373.743f073d.jpg" id="297" alt="data-img">
+<img src="/374.e405aaa0.jpg" id="298" alt="data-img">
+<img src="/375.d3fd68fe.jpg" id="299" alt="data-img">
+<img src="/376.f8ca4634.jpg" id="300" alt="data-img">
+<img src="/377.fa0e4652.jpg" id="301" alt="data-img">
+<img src="/378.0d84e172.jpg" id="302" alt="data-img">
+<img src="/379.b9b7eccd.jpg" id="303" alt="data-img">
+<img src="/380.2e990d70.jpg" id="304" alt="data-img">
+<img src="/381.3f7b036a.jpg" id="305" alt="data-img">
+<img src="/382.ac00e051.jpg" id="306" alt="data-img">
+<img src="/383.938448cb.jpg" id="307" alt="data-img">
+<img src="/384.a77fe8db.jpg" id="308" alt="data-img">
+<img src="/385.1146e430.jpg" id="309" alt="data-img">
+<img src="/386.2ff17036.jpg" id="310" alt="data-img">
+<img src="/387.24b89160.jpg" id="311" alt="data-img">
+<img src="/388.85a5cd5b.jpg" id="312" alt="data-img">
+<!-- <img src="./data/formatted2/389.jpg" id="313" alt="data-img" /> -->
+<img src="/390.03f2615a.jpg" id="314" alt="data-img">
+<img src="/391.25b28298.jpg" id="315" alt="data-img">
+<img src="/001.7d81bb05.jpg" id="001" alt="data-img">
+<img src="/002.69ab10a5.jpg" id="002" alt="data-img">
+<img src="/003.d289f6cf.jpg" id="003" alt="data-img">
+<img src="/004.7d61c89b.jpg" id="004" alt="data-img">
+<img src="/005.2e6d52df.jpg" id="005" alt="data-img">
+<img src="/006.eb1892ea.jpg" id="006" alt="data-img">
+<img src="/007.936f056b.jpg" id="007" alt="data-img">
+<img src="/008.78d116e1.jpg" id="008" alt="data-img">
+<img src="/009.0cabbc50.jpg" id="009" alt="data-img">
+<img src="/010.f792dfc5.jpg" id="010" alt="data-img">
+<img src="/011.c414ee61.jpg" id="011" alt="data-img">
+<img src="/012.82c5c58f.jpg" id="012" alt="data-img">
+<img src="/013.debefd8c.jpg" id="013" alt="data-img">
+<img src="/014.a00b84e5.jpg" id="014" alt="data-img">
+<img src="/015.edb48823.jpg" id="015" alt="data-img">
+<img src="/016.c1524a41.jpg" id="016" alt="data-img">
+<img src="/017.1e7b1020.jpg" id="017" alt="data-img">
+<img src="/018.90528a80.jpg" id="018" alt="data-img">
+<img src="/019.12ff2a51.jpg" id="019" alt="data-img">
+<img src="/020.0adee6d8.jpg" id="020" alt="data-img">
+<img src="/021.3db2799e.jpg" id="021" alt="data-img">
+<img src="/022.3b61fba8.jpg" id="022" alt="data-img">
+<img src="/099.b0678149.jpg" id="023" alt="data-img">
+<img src="/100.601cc89f.jpg" id="024" alt="data-img">
+<img src="/101.bcaf3222.jpg" id="025" alt="data-img">
+<img src="/102.8fe13917.jpg" id="026" alt="data-img">
+<img src="/103.181d1973.jpg" id="027" alt="data-img">
+<img src="/104.17725b69.jpg" id="028" alt="data-img">
+<img src="/105.eef9ef2e.jpg" id="029" alt="data-img">
+<!-- <img src="./data/formatted2/106.jpg" id="030" alt="data-img" /> -->
+<!-- <img src="./data/formatted2/107.jpg" id="031" alt="data-img" /> -->
+<img src="/108.7242df87.jpg" id="032" alt="data-img">
+<img src="/109.b566ebe0.jpg" id="033" alt="data-img">
+<img src="/110.b5007305.jpg" id="034" alt="data-img">
+<img src="/111.f8395276.jpg" id="035" alt="data-img">
+<img src="/112.1c78b687.jpg" id="036" alt="data-img">
+<img src="/113.1bf75767.jpg" id="037" alt="data-img">
+<img src="/392.6f64d89c.jpg" id="316" alt="data-img">
+<img src="/393.e4f32292.jpg" id="317" alt="data-img">
+<img src="/394.786666b0.jpg" id="318" alt="data-img">
+<img src="/395.548eb9c6.jpg" id="319" alt="data-img">
+<img src="/396.a628be34.jpg" id="320" alt="data-img">
+<img src="/397.ce87b475.jpg" id="321" alt="data-img">
+<img src="/398.dc66352d.jpg" id="322" alt="data-img">
+<img src="/399.f828ecc2.jpg" id="323" alt="data-img">
+<!-- <img src="./data/formatted2/400.jpg" id="324" alt="data-img" /> -->
+<img src="/401.05636077.jpg" id="325" alt="data-img">
+<img src="/402.55f64408.jpg" id="326" alt="data-img">
+<img src="/403.f2fa44f4.jpg" id="327" alt="data-img">
+<img src="/404.dd5d49e4.jpg" id="328" alt="data-img">
+<img src="/405.53470e26.jpg" id="329" alt="data-img">
+<img src="/406.299d51e7.jpg" id="330" alt="data-img">
+<img src="/407.3a3b6946.jpg" id="331" alt="data-img">
+<img src="/408.245801dd.jpg" id="332" alt="data-img">
+<img src="/409.ae705592.jpg" id="333" alt="data-img">
+<img src="/410.62673c0d.jpg" id="334" alt="data-img">
+<img src="/411.61221767.jpg" id="335" alt="data-img">
+<!-- <img src="./data/formatted2/412.jpg" id="336" alt="data-img" /> -->
+<img src="/413.f49a7fc6.jpg" id="337" alt="data-img">
+<img src="/414.bb6fb49b.jpg" id="338" alt="data-img">
+<img src="/415.036e5634.jpg" id="339" alt="data-img">
+<img src="/416.063de0a8.jpg" id="340" alt="data-img">
+<img src="/417.f1e1aa0b.jpg" id="341" alt="data-img">
+<img src="/418.1236e295.jpg" id="342" alt="data-img">
+<img src="/419.4cc536b2.jpg" id="343" alt="data-img">
+<img src="/420.c835068e.jpg" id="344" alt="data-img">
+<img src="/421.88185254.jpg" id="345" alt="data-img">
+<img src="/422.ec49cf7b.jpg" id="346" alt="data-img">
+<img src="/423.251be415.jpg" id="347" alt="data-img">
+<img src="/424.88cbbfb7.jpg" id="348" alt="data-img">
+<img src="/425.eb32853a.jpg" id="349" alt="data-img">
+<img src="/426.60467cc3.jpg" id="350" alt="data-img">
+<img src="/427.09b9d70d.jpg" id="351" alt="data-img">
+<img src="/428.a0e870ec.jpg" id="352" alt="data-img">
+<img src="/429.ee4c7e80.jpg" id="353" alt="data-img">
+<img src="/430.7441372c.jpg" id="354" alt="data-img">
+<img src="/431.afa15037.jpg" id="355" alt="data-img">
+<img src="/432.69639279.jpg" id="356" alt="data-img">
+<img src="/433.9c139854.jpg" id="357" alt="data-img">
+<img src="/434.6fcfd26d.jpg" id="358" alt="data-img">
+<img src="/435.fd724914.jpg" id="359" alt="data-img">
+<img src="/436.334484a7.jpg" id="360" alt="data-img">
+<img src="/437.62765112.jpg" id="361" alt="data-img">
+<img src="/438.42ce08c9.jpg" id="362" alt="data-img">
+<!-- <img src="./data/formatted2/439.jpg" id="363" alt="data-img" /> -->
+<img src="/440.c3a273ee.jpg" id="364" alt="data-img">
+<img src="/441.789d06db.jpg" id="365" alt="data-img">
+<img src="/442.0929f644.jpg" id="366" alt="data-img">
+<img src="/443.24fc9cd6.jpg" id="367" alt="data-img">
+<img src="/444.6c97c8f4.jpg" id="368" alt="data-img">
+<img src="/445.b974f0b2.jpg" id="369" alt="data-img">
+<img src="/446.cbd42c4c.jpg" id="370" alt="data-img">
+<img src="/447.e338a144.jpg" id="371" alt="data-img">
+<img src="/448.8f24b202.jpg" id="372" alt="data-img">
+<img src="/449.c09e0cad.jpg" id="373" alt="data-img">
+<img src="/450.bcea711a.jpg" id="374" alt="data-img">
+<img src="/451.a349d24b.jpg" id="375" alt="data-img">
+<img src="/452.e2fe0ad1.jpg" id="376" alt="data-img">
+<img src="/453.aa87e271.jpg" id="377" alt="data-img">
+<img src="/454.fc99f47a.jpg" id="378" alt="data-img">
+<img src="/455.8bc66cfa.jpg" id="379" alt="data-img">
+<img src="/456.48133dc3.jpg" id="380" alt="data-img">
+<img src="/457.2ddc381a.jpg" id="381" alt="data-img">
+<img src="/458.a2b4547e.jpg" id="382" alt="data-img">
+<img src="/459.dc701439.jpg" id="383" alt="data-img">
+<img src="/460.4affd25d.jpg" id="384" alt="data-img">
+<img src="/461.3843309a.jpg" id="385" alt="data-img">
+<img src="/462.73c0149e.jpg" id="386" alt="data-img">
+<img src="/463.7e7fc1c4.jpg" id="387" alt="data-img">
+<img src="/464.105f20b6.jpg" id="388" alt="data-img">
+<img src="/465.18e386c7.jpg" id="389" alt="data-img">
+<img src="/466.1a70b139.jpg" id="390" alt="data-img">
+<img src="/467.b55d9450.jpg" id="391" alt="data-img">
+<img src="/468.749ac4f5.jpg" id="392" alt="data-img">
+<img src="/469.17b7dd7a.jpg" id="393" alt="data-img">
+<img src="/470.e7b581e7.jpg" id="394" alt="data-img">
+<img src="/471.33ccb78b.jpg" id="395" alt="data-img">
+<img src="/472.a8f13099.jpg" id="396" alt="data-img">
+<img src="/473.0085484f.jpg" id="397" alt="data-img">
+<img src="/474.0c1ce50d.jpg" id="398" alt="data-img">
+<img src="/475.b822fa2d.jpg" id="399" alt="data-img">
+<img src="/476.7493c779.jpg" id="400" alt="data-img">
+<img src="/477.fb5dd74f.jpg" id="401" alt="data-img">
+<img src="/479.39557a78.jpg" id="402" alt="data-img">
+<img src="/481.c7cc4865.jpg" id="403" alt="data-img">
+<img src="/482.18dc26f4.jpg" id="404" alt="data-img">
+<img src="/483.1034d7b1.jpg" id="405" alt="data-img">
+<img src="/484.2fbd85a8.jpg" id="406" alt="data-img">
+<img src="/485.59f4ed2a.jpg" id="407" alt="data-img">
+<img src="/486.003e3c7c.jpg" id="408" alt="data-img">
+<img src="/487.7a0fb1fa.jpg" id="409" alt="data-img">
+<img src="/488.1383fce7.jpg" id="410" alt="data-img">
+<img src="/489.de8bb17f.jpg" id="411" alt="data-img">
+<img src="/490.e9f0c1d2.jpg" id="412" alt="data-img">
+<img src="/491.bacddfef.jpg" id="413" alt="data-img">
+<img src="/492.6bef9369.jpg" id="414" alt="data-img">
+<img src="/493.a9e3fb26.jpg" id="415" alt="data-img">
+<img src="/494.c22d110e.jpg" id="416" alt="data-img">
+<img src="/495.77aca032.jpg" id="417" alt="data-img">
+<img src="/496.8683e753.jpg" id="418" alt="data-img">
+<img src="/497.81ef6741.jpg" id="419" alt="data-img">
+<img src="/498.a29c2479.jpg" id="420" alt="data-img">
+<img src="/499.4c89a094.jpg" id="421" alt="data-img">
+<img src="/500.8f2c87ec.jpg" id="422" alt="data-img">
+<img src="/501.b5d1c0e0.jpg" id="423" alt="data-img">
+<img src="/502.c814b051.jpg" id="424" alt="data-img">
+<img src="/503.fa07566d.jpg" id="425" alt="data-img">
+<img src="/504.d21ac504.jpg" id="426" alt="data-img">
+<img src="/505.f5271063.jpg" id="427" alt="data-img">
+<img src="/506.f920877b.jpg" id="428" alt="data-img">
+<img src="/507.9c0e6172.jpg" id="429" alt="data-img">
+<img src="/508.eb58a1b9.jpg" id="430" alt="data-img">
+<img src="/509.7aa9b2d8.jpg" id="431" alt="data-img">
+<img src="/510.727020c9.jpg" id="432" alt="data-img">
+<img src="/511.f76ac6d6.jpg" id="433" alt="data-img">
+<img src="/512.3ed7ed20.jpg" id="434" alt="data-img">
+<img src="/513.bc4e8a06.jpg" id="435" alt="data-img">
+<img src="/514.89df4c91.jpg" id="436" alt="data-img">
+<img src="/515.fbb140c8.jpg" id="437" alt="data-img">
+<img src="/516.d0bde6f3.jpg" id="438" alt="data-img">
+<img src="/517.750b6cac.jpg" id="439" alt="data-img">
+<img src="/518.5a668a49.jpg" id="440" alt="data-img">
+<img src="/519.665edba3.jpg" id="441" alt="data-img">
+<img src="/520.bce235bf.jpg" id="442" alt="data-img">
+<img src="/521.be7c55d2.jpg" id="443" alt="data-img">
+<img src="/522.8f70a953.jpg" id="444" alt="data-img">
+<img src="/523.e7c17276.jpg" id="445" alt="data-img">
+<img src="/524.a494b819.jpg" id="446" alt="data-img">
+<img src="/525.0605d69c.jpg" id="447" alt="data-img">
+<img src="/526.195d0d15.jpg" id="448" alt="data-img">
+<img src="/527.6a7b78d2.jpg" id="449" alt="data-img">
+<img src="/528.0987ea7c.jpg" id="450" alt="data-img">
+<img src="/529.df829a50.jpg" id="451" alt="data-img">
+<img src="/530.5bc26a2c.jpg" id="452" alt="data-img">
+<img src="/531.12c03c45.jpg" id="453" alt="data-img">
+<img src="/533.279a124b.jpg" id="454" alt="data-img">
+<img src="/534.71131847.jpg" id="455" alt="data-img">
+<img src="/535.c2331908.jpg" id="456" alt="data-img">
+<img src="/536.dc54783a.jpg" id="457" alt="data-img">
+<img src="/538.b801528b.jpg" id="458" alt="data-img">
+<img src="/539.5c29acb7.jpg" id="459" alt="data-img">
+<img src="/540.9bf73ac2.jpg" id="460" alt="data-img">
+<img src="/541.c2312738.jpg" id="461" alt="data-img">
+<img src="/542.90633f34.jpg" id="462" alt="data-img">
+<img src="/543.711b24f0.jpg" id="463" alt="data-img">
+<img src="/544.1a4be881.jpg" id="464" alt="data-img">
+<img src="/545.a652e061.jpg" id="465" alt="data-img">
+<img src="/546.417b477f.jpg" id="466" alt="data-img">
+<img src="/547.df716d53.jpg" id="467" alt="data-img">
+<img src="/548.f8d25938.jpg" id="468" alt="data-img">
+<img src="/549.4bfdbc7e.jpg" id="469" alt="data-img">
+<img src="/550.ad8b1fd0.jpg" id="470" alt="data-img">
+<img src="/551.ae140de6.jpg" id="471" alt="data-img">
+<img src="/552.ab66c180.jpg" id="472" alt="data-img">
+<img src="/553.7854e9e1.jpg" id="473" alt="data-img">
+<img src="/554.b3c109dd.jpg" id="474" alt="data-img">
+<img src="/555.206b2f01.jpg" id="475" alt="data-img">
+<img src="/556.f62310e5.jpg" id="476" alt="data-img">
+<img src="/557.dc9984c5.jpg" id="477" alt="data-img">
+<img src="/558.233ace9a.jpg" id="478" alt="data-img">
+<img src="/559.45c56f42.jpg" id="479" alt="data-img">
+<img src="/560.6b3814f0.jpg" id="480" alt="data-img">
+<img src="/561.e7d2b61e.jpg" id="481" alt="data-img">
+<img src="/562.e2274b0c.jpg" id="482" alt="data-img">
+<img src="/563.5765e317.jpg" id="483" alt="data-img">
+<img src="/564.e7b5c6e8.jpg" id="484" alt="data-img">
+<img src="/565.e848d4c6.jpg" id="485" alt="data-img">
+<img src="/566.7916da5a.jpg" id="486" alt="data-img">
+<img src="/567.f36e2c75.jpg" id="487" alt="data-img">
+<img src="/568.5af03f44.jpg" id="488" alt="data-img">
+<img src="/569.288ffaed.jpg" id="489" alt="data-img">
+      </div>
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
+     <script src="/video.422110ec.js"></script>
+   </body>
+   

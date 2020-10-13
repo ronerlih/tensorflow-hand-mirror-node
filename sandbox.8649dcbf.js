@@ -26399,8 +26399,9 @@ var _fingers = require("./fingers.js");
 // const COLOR = "lightgreen";
 const COLOR = "black";
 const HIGHLIGHT_COLOR = "blue";
+const HAND_COLOR = "white";
 const POINT_SIZE = 3;
-const HIGHLIGHT_POINT_SIZE = 6;
+const HIGHLIGHT_POINT_SIZE = 2;
 
 function drawPoint(ctx, y, x, r) {
   ctx.beginPath();
@@ -26417,27 +26418,28 @@ function drawPointAnnotation(ctx, y, x, r, text, color) {
 }
 
 function drawKeypoints(ctx, keypoints) {
-  ctx.strokeStyle = COLOR;
-  ctx.fillStyle = COLOR;
+  //  ctx.strokeStyle = COLOR;
+  //  ctx.fillStyle = COLOR;
+  ctx.strokeStyle = HAND_COLOR;
+  ctx.fillStyle = HAND_COLOR;
+  ctx.lineWidth = HIGHLIGHT_POINT_SIZE;
   const keypointsArray = keypoints; // const pointFilter = idx => idx === 0 || idx === 2 || idx === 5 || idx === 9 || idx === 13 || idx === 17
   // const pointFilter = idx => idx === 0 || idx === 4 || idx === 8 || idx === 12 || idx === 16 || idx === 20
 
-  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2;
+  const pointFilter = idx => idx === 0 || idx === 17 || idx === 5 || idx === 2; // for (let i = 0; i < keypointsArray.length; i++) {
+  //    if(pointFilter(i)){
+  //       ctx.strokeStyle = HIGHLIGHT_COLOR;
+  //       ctx.fillStyle = HIGHLIGHT_COLOR;
+  //    }else{
+  //       ctx.strokeStyle = COLOR;
+  //       ctx.fillStyle = COLOR;
+  //    }
+  //   const y = keypointsArray[i][0];
+  //   const x = keypointsArray[i][1];
+  //   drawPoint(ctx, x , y , pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
+  //   drawPointAnnotation(ctx, x, y, 0, i)
+  // }
 
-  for (let i = 0; i < keypointsArray.length; i++) {
-    if (pointFilter(i)) {
-      ctx.strokeStyle = HIGHLIGHT_COLOR;
-      ctx.fillStyle = HIGHLIGHT_COLOR;
-    } else {
-      ctx.strokeStyle = COLOR;
-      ctx.fillStyle = COLOR;
-    }
-
-    const y = keypointsArray[i][0];
-    const x = keypointsArray[i][1];
-    drawPoint(ctx, x, y, pointFilter(i) ? HIGHLIGHT_POINT_SIZE : POINT_SIZE);
-    drawPointAnnotation(ctx, x, y, 0, i);
-  }
 
   const fingers = Object.keys(_fingers.fingerLookupIndices);
 
@@ -26589,7 +26591,7 @@ function dot( x, y, clbk ) {
 
 module.exports = dot;
 
-},{"validate.io-array":"node_modules/validate.io-array/lib/index.js","validate.io-function":"node_modules/validate.io-function/lib/index.js"}],"node_modules/compute-l2norm/lib/index.js":[function(require,module,exports) {
+},{"validate.io-array":"node_modules/validate.io-array/lib/index.js","validate.io-function":"node_modules/validate.io-function/lib/index.js"}],"node_modules/compute-cosine-similarity/node_modules/compute-l2norm/lib/index.js":[function(require,module,exports) {
 'use strict';
 
 // MODULES //
@@ -26743,7 +26745,7 @@ function similarity( x, y, clbk ) {
 
 module.exports = similarity;
 
-},{"compute-dot":"node_modules/compute-dot/lib/index.js","compute-l2norm":"node_modules/compute-l2norm/lib/index.js","validate.io-array":"node_modules/validate.io-array/lib/index.js","validate.io-function":"node_modules/validate.io-function/lib/index.js"}],"node_modules/vptree/vptree.js":[function(require,module,exports) {
+},{"compute-dot":"node_modules/compute-dot/lib/index.js","compute-l2norm":"node_modules/compute-cosine-similarity/node_modules/compute-l2norm/lib/index.js","validate.io-array":"node_modules/validate.io-array/lib/index.js","validate.io-function":"node_modules/validate.io-function/lib/index.js"}],"node_modules/vptree/vptree.js":[function(require,module,exports) {
 var define;
 /*╔═════════════════════════════════════════════════════════════════════════════════════════════════════════╗
  *║                                                                                                         ║
@@ -27415,5 +27417,5 @@ main();
 Number.prototype.minMax = function (min, max) {
   return Math.min(Math.max(this, min), max);
 };
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js","./utils/findSimilar.js":"utils/findSimilar.js","compute-l2norm":"node_modules/compute-l2norm/lib/index.js"}]},{},["sandbox.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","./utils/drawing.js":"utils/drawing.js","./utils/findSimilar.js":"utils/findSimilar.js","compute-l2norm":"node_modules/compute-cosine-similarity/node_modules/compute-l2norm/lib/index.js"}]},{},["sandbox.js"], null)
 //# sourceMappingURL=/sandbox.8649dcbf.js.map
