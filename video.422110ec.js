@@ -27393,12 +27393,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // import  imagesToTensors from "./imagesToTensors";
 const imagesContainer = document.querySelector('#images');
 let normalisedPoses = [];
-const poseData = []; //  in-memory canvas to transfor hand img
-
-const mCanvas = document.createElement('canvas');
-mCanvas.width = 300;
-mCanvas.height = 300;
-const memoryContext = mCanvas.getContext('2d'); // (async function () {
+const poseData = []; // (async function () {
 //    console.log('done start')
 //    const images = imagePaths
 //       .map(filename => new Promise ((res, rej) => {
@@ -27640,7 +27635,30 @@ function getCentroid(...args) {
 Number.prototype.map = function (in_min, in_max, out_min, out_max) {
   return (this - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 };
-},{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js","compute-l1norm":"node_modules/compute-l1norm/lib/index.js","../data/imagePaths.json":"data/imagePaths.json","fs":"node_modules/parcel-bundler/src/builtins/_empty.js"}],"video.js":[function(require,module,exports) {
+},{"./drawing.js":"utils/drawing.js","./findSimilarVideo":"utils/findSimilarVideo.js","compute-l1norm":"node_modules/compute-l1norm/lib/index.js","../data/imagePaths.json":"data/imagePaths.json","fs":"node_modules/parcel-bundler/src/builtins/_empty.js"}],"config/state.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.state = void 0;
+const state = {};
+exports.state = state;
+state.confidence = 0.05;
+state.flip = false;
+state.drawInputPose = true;
+state.drawHandPoseOnData = true;
+state.opacity = 0.6;
+state.drawDirection = false; // (overlay transformations)
+
+state.destinationIn = false;
+state.lighter = false;
+state.screen = false;
+state.softLight = false;
+state.multiply = false;
+state.overlay = false;
+state.difference = false;
+},{}],"video.js":[function(require,module,exports) {
 "use strict";
 
 var handpose = _interopRequireWildcard(require("@tensorflow-models/handpose"));
@@ -27656,6 +27674,8 @@ var _video = require("./utils/video.js");
 var _imagesData = require("./utils/imagesData");
 
 var _findSimilarVideo = require("./utils/findSimilarVideo");
+
+var _state = require("./config/state");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -27684,21 +27704,6 @@ let videoWidth, videoHeight; // const VIDEO_WIDTH = 640;
 
 const mobile = utils.isMobile();
 const stats = new Stats();
-const state = {};
-state.confidence = 0.05;
-state.flip = false;
-state.drawInputPose = true;
-state.drawHandPoseOnData = true;
-state.opacity = 0.6;
-state.drawDirection = false; // (overlay transformations)
-
-state.destinationIn = false;
-state.lighter = false;
-state.screen = false;
-state.softLight = false;
-state.multiply = false;
-state.overlay = false;
-state.difference = false;
 let model;
 let estimationWorker;
 let globalCtx;
@@ -27710,7 +27715,7 @@ const main = async () => {
   console.time("load model"); // load a global version of the model (TO-DO: is redundant)
 
   model = await handpose.load({
-    detectionConfidence: state.confidence,
+    detectionConfidence: _state.state.confidence,
     // maxContinuousChecks: 10 ,
     iouThreshold: 0.05
   });
@@ -27719,7 +27724,7 @@ const main = async () => {
   // build hand pool data
 
   console.time("imges and poses");
-  await (0, _imagesData.buildImagesData)(model, state);
+  await (0, _imagesData.buildImagesData)(model, _state.state);
   console.timeEnd("imges and poses");
   let video;
   console.time("init video");
@@ -27813,7 +27818,7 @@ function setupDatGui(state) {
 const landmarksRealTime = async video => {
   console.time("init gui"); // control
 
-  setupDatGui(state);
+  setupDatGui(_state.state);
   console.timeEnd("init gui");
   console.time("setup flandmarksRealTime"); // stats (frame rate)
 
@@ -27825,7 +27830,7 @@ const landmarksRealTime = async video => {
   canvas.height = videoHeight;
   ctx = canvas.getContext("2d");
   globalCtx = ctx;
-  globalCtx.globalAlpha = state.opacity;
+  globalCtx.globalAlpha = _state.state.opacity;
   video.width = videoWidth;
   video.height = videoHeight; // ctx.clearRect(0, 0, videoWidth, videoHeight);
   // ctx.strokeStyle = "lightgreen";
@@ -27841,14 +27846,14 @@ const landmarksRealTime = async video => {
 async function frameLandmarks() {
   stats.begin();
   ctx.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, canvas.width, canvas.height);
-  const predictions = await model.estimateHands(video, state.flip);
+  const predictions = await model.estimateHands(video, _state.state.flip);
 
   if (predictions.length > 0) {
-    if (predictions.length > 1) console.log(predictions);
+    console.log(predictions[0].boundingBox);
     const landmarks = predictions[0].landmarks;
     const centroid = (0, _imagesData.getCentroid)(landmarks[0], landmarks[2], landmarks[5], landmarks[17]);
 
-    if (state.drawDirection) {
+    if (_state.state.drawDirection) {
       (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
       ctx.strokeStyle = "lightgreen";
       ctx.lineWidth = 3;
@@ -27859,10 +27864,10 @@ async function frameLandmarks() {
 
     predictions[0].centroid = centroid;
     const result = predictions[0].landmarks;
-    if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+    if (_state.state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
 
     const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-    if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
+    if (_state.state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, _state.state);
   }
 
   stats.end();
@@ -27891,7 +27896,7 @@ async function handlePredictions(predictions) {
     if (predictions.length > 1) console.log(predictions);
     const centroid = (0, _imagesData.getCentroid)(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
 
-    if (state.drawDirection) {
+    if (_state.state.drawDirection) {
       (0, _drawing.drawPoint)(ctx, centroid[1], centroid[0], 4);
       ctx.strokeStyle = "lightgreen";
       ctx.lineWidth = 3;
@@ -27902,10 +27907,10 @@ async function handlePredictions(predictions) {
 
     predictions[0].centroid = centroid;
     const result = predictions[0].landmarks;
-    if (state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
+    if (_state.state.drawInputPose) (0, _drawing.drawKeypoints)(ctx, result, predictions[0].annotations); // overlay hand image
 
     const matchIndex = (0, _findSimilarVideo.findSimilar)((0, _imagesData.mapLandmarks)(predictions[0].landmarks));
-    if (state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, state);
+    if (_state.state.drawDataPose) await (0, _imagesData.placeImage)(ctx, predictions[0], matchIndex, _state.state);
   }
 
   stats.end();
@@ -27937,5 +27942,5 @@ function confirmAllImages() {
 
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 main();
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js"}]},{},["video.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js","./config/state":"config/state.js"}]},{},["video.js"], null)
 //# sourceMappingURL=/video.422110ec.js.map
