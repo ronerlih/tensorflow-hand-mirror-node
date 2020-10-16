@@ -27272,10 +27272,10 @@ function buildVPTree(poseData) {
 
 
 function cosineDistanceMatching(poseVector1, poseVector2) {
-  // let distance = euclideanSimilarity(poseVector1, poseVector2)
-  let cosineSimilarity = similarity(poseVector1, poseVector2);
-  let distance = 2 * (1 - cosineSimilarity);
-  return Math.sqrt(distance);
+  let distance = euclideanSimilarity(poseVector1, poseVector2); // let cosineSimilarity = similarity(poseVector1, poseVector2);
+  // let distance = 2 * (1 - cosineSimilarity);
+
+  return Math.sqrt(Math.sqrt(distance));
 }
 
 function findSimilar(currentUserPose) {
@@ -27476,7 +27476,12 @@ function normaliseImages(images, model, config) {
           // handFoundPipeline(predictions, img)
         }
 
-        if (i === images.length - 1) resolve(poseData);
+        i === images.length - 1;
+
+        if (i === images.length - 1) {
+          progressBar.style.display = 'none';
+          resolve(poseData);
+        }
       }, 0);
     }
   });
@@ -27604,7 +27609,8 @@ async function placeImage(ctx, prediction, matchIndex, options) {
   const angel = getAngle(userBone, matchBone);
   const userDistance = Math.sqrt(Math.pow(prediction.centroid[0] - prediction.landmarks[0][0], 2) + Math.pow(prediction.centroid[1] - prediction.landmarks[0][1], 2));
   const matchDistance = Math.sqrt(Math.pow(poseData[matchIndex][1].centroid[0] - poseData[matchIndex][1].landmarks[0][0], 2) + Math.pow(poseData[matchIndex][1].centroid[1] - poseData[matchIndex][1].landmarks[0][1], 2));
-  const scale = userDistance / matchDistance; // draw im to mem canvas
+  const scale = userDistance / matchDistance;
+  ctx.globalAlpha = options.overlayOpacity; // draw im to mem canvas
   // memoryContext.drawImage(poseData[matchIndex][0],0,0);
   // const originContext = poseData[matchIndex][0].getContext('2d');
 
@@ -27636,6 +27642,7 @@ async function placeImage(ctx, prediction, matchIndex, options) {
   ctx.translate(-translateMatchRootX * scale, -translateMatchRootY * scale);
   ctx.rotate(angel);
   ctx.translate(-translateRotateX, -translateRotateY);
+  ctx.globalAlpha = options.opacity;
   return;
 }
 
@@ -27658,9 +27665,9 @@ const state = {};
 exports.state = state;
 state.confidence = 0.05;
 state.flip = false;
-state.drawInputPose = true;
+state.drawInputPose = false;
 state.drawHandPoseOnData = true;
-state.opacity = 0.6;
+state.opacity = 1;
 state.drawDirection = false; // (overlay transformations)
 
 state.destinationIn = false;
@@ -27670,6 +27677,7 @@ state.softLight = false;
 state.multiply = false;
 state.overlay = false;
 state.difference = false;
+state.overlayOpacity = 0.55;
 },{}],"utils/Recording.js":[function(require,module,exports) {
 /*
 *  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
@@ -27906,8 +27914,8 @@ const main = async () => {
     noCameraMessage(e);
   }
 
-  console.timeEnd("init video"); // const recording = new Recording();
-
+  console.timeEnd("init video");
+  const recording = new _Recording.Recording();
   landmarksRealTime(video);
 };
 
@@ -27920,7 +27928,6 @@ function noCameraMessage(e) {
 
 function setupDatGui(state) {
   const gui = new dat.GUI();
-  state.opacity = 0.6;
   state.drawDataPose = true;
   state.sourceRatio = 0.3;
   state.drawHandPose = true;
@@ -27937,7 +27944,11 @@ function setupDatGui(state) {
   handSource.add(state, "flip").onChange(flip => {
     state.flip = flip;
   });
-  const video = gui.addFolder("video"); //global alpha
+  const video = gui.addFolder("video"); //overlay alpha
+
+  video.add(state, "overlayOpacity", 0, 1).onChange(sliderValue => {
+    state.overlayOpacity = sliderValue; // if (globalCtx) globalCtx.globalAlpha = sliderValue;
+  }); //global alpha
 
   video.add(state, "opacity", 0, 1).onChange(sliderValue => {
     state.opacity = sliderValue;
@@ -27957,13 +27968,13 @@ function setupDatGui(state) {
   drawing.add(state, "drawDataPose").onChange(flip => {
     state.drawDataPose = flip;
   }); // draw data pose switch
+  // drawing.add(state, "drawHandPoseOnData").onChange((val) => {
+  // 	state.drawHandPoseOnData = val;
+  // 	gui.destroy();
+  // 	cancelAnimationFrame(realtimeAnimationFrameRef);
+  // 	main();
+  // });
 
-  drawing.add(state, "drawHandPoseOnData").onChange(val => {
-    state.drawHandPoseOnData = val;
-    gui.destroy();
-    cancelAnimationFrame(realtimeAnimationFrameRef);
-    main();
-  });
   drawing.open();
   const blending = gui.addFolder("blending");
   blending.add(state, "overlay").onChange(bool => {
@@ -28021,7 +28032,7 @@ async function frameLandmarks() {
   const predictions = await model.estimateHands(video, _state.state.flip);
 
   if (predictions.length > 0) {
-    getSecondHand(predictions[0].boundingBox);
+    // getSecondHand(predictions[0].boundingBox)
     const landmarks = predictions[0].landmarks;
     const centroid = (0, _imagesData.getCentroid)(landmarks[0], landmarks[2], landmarks[5], landmarks[17]);
 
