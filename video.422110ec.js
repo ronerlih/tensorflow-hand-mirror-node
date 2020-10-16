@@ -27975,26 +27975,26 @@ function setupDatGui(state) {
   // 	main();
   // });
 
-  drawing.open();
-  const blending = gui.addFolder("blending");
-  blending.add(state, "overlay").onChange(bool => {
-    state.overlay = bool;
-  });
-  blending.add(state, "screen").onChange(bool => {
-    state.screen = bool;
-  });
-  blending.add(state, "multiply").onChange(bool => {
-    state.multiply = bool;
-  });
-  blending.add(state, "lighter").onChange(bool => {
-    state.lighter = bool;
-  });
-  blending.add(state, "softLight").onChange(bool => {
-    state.softLight = bool;
-  });
-  blending.add(state, "difference").onChange(bool => {
-    state.difference = bool;
-  });
+  drawing.open(); // const blending = gui.addFolder("blending");
+  // blending.add(state, "overlay").onChange((bool) => {
+  // 	state.overlay = bool;
+  // });
+  // blending.add(state, "screen").onChange((bool) => {
+  // 	state.screen = bool;
+  // });
+  // blending.add(state, "multiply").onChange((bool) => {
+  // 	state.multiply = bool;
+  // });
+  // blending.add(state, "lighter").onChange((bool) => {
+  // 	state.lighter = bool;
+  // });
+  // blending.add(state, "softLight").onChange((bool) => {
+  // 	state.softLight = bool;
+  // });
+  // blending.add(state, "difference").onChange((bool) => {
+  // 	state.difference = bool;
+  // });
+
   gui.close(); // blending.open();
 }
 
