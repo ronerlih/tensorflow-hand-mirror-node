@@ -27392,6 +27392,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 // import  imagesToTensors from "./imagesToTensors";
 const imagesContainer = document.querySelector('#images');
+const progressBar = document.querySelector('#progress-bar');
 let normalisedPoses = [];
 const poseData = []; // (async function () {
 //    console.log('done start')
@@ -27412,7 +27413,8 @@ async function getHandFromImage(img) {
 }
 
 async function buildImagesData(model, config) {
-  let images = document.querySelector('#images').children; // const imagesTensors = imagesToTensors();
+  let images = document.querySelector('#images').children;
+  console.log(images.length); // const imagesTensors = imagesToTensors();
   // console.log(imagesTensors)
 
   const imagesAndPoses = await normaliseImages(images, model, config);
@@ -27435,43 +27437,53 @@ async function findMatch(lookupPose) {
   return similarIndexOrder;
 }
 
-async function normaliseImages(images, model, config) {
-  for (let [i, img] of [...images].entries()) {
-    // get prediction
-    const predictions = await model.estimateHands(img);
+function normaliseImages(images, model, config) {
+  return new Promise(resolve => {
+    for (let [i, img] of [...images].entries()) {
+      // get prediction
+      setTimeout(async () => {
+        console.log(i, 'of', images.length);
+        addProgress(i, images.length);
+        const predictions = await model.estimateHands(img);
 
-    if (predictions[0] && predictions[0].landmarks) {
-      //set c
-      // const centroid = getCentroid(
-      //    predictions[0].landmarks[0],
-      //    predictions[0].landmarks[2],
-      //    predictions[0].landmarks[5],
-      //    predictions[0].landmarks[9],
-      //    predictions[0].landmarks[13],
-      //    predictions[0].landmarks[17],
-      //    )
-      //set a
-      // const centroid = getCentroid(
-      //    predictions[0].landmarks[0],
-      //    predictions[0].landmarks[4],
-      //    predictions[0].landmarks[8],
-      //    predictions[0].landmarks[12],
-      //    predictions[0].landmarks[16],
-      //    predictions[0].landmarks[20],
-      //    )
-      // set b
-      const centroid = getCentroid(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
-      normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
-      predictions[0].centroid = centroid; // draw to canvas
-      // get canvas and draw
-      // canvasFromTensor()
+        if (predictions[0] && predictions[0].landmarks) {
+          //set c
+          // const centroid = getCentroid(
+          //    predictions[0].landmarks[0],
+          //    predictions[0].landmarks[2],
+          //    predictions[0].landmarks[5],
+          //    predictions[0].landmarks[9],
+          //    predictions[0].landmarks[13],
+          //    predictions[0].landmarks[17],
+          //    )
+          //set a
+          // const centroid = getCentroid(
+          //    predictions[0].landmarks[0],
+          //    predictions[0].landmarks[4],
+          //    predictions[0].landmarks[8],
+          //    predictions[0].landmarks[12],
+          //    predictions[0].landmarks[16],
+          //    predictions[0].landmarks[20],
+          //    )
+          // set b
+          const centroid = getCentroid(predictions[0].landmarks[0], predictions[0].landmarks[2], predictions[0].landmarks[5], predictions[0].landmarks[17]);
+          normalisedPoses.push(mapLandmarks(predictions[0].landmarks));
+          predictions[0].centroid = centroid; // draw to canvas
+          // get canvas and draw
+          // canvasFromTensor()
 
-      poseData.push([img, predictions[0]]); // canvas.boundingBox =  predictions[0].boundingBox
-      // handFoundPipeline(predictions, img)
+          poseData.push([img, predictions[0]]); // canvas.boundingBox =  predictions[0].boundingBox
+          // handFoundPipeline(predictions, img)
+        }
+
+        if (i === images.length - 1) resolve(poseData);
+      }, 0);
     }
-  }
+  });
+}
 
-  return poseData;
+function addProgress(i, of) {
+  progressBar.style.width = "".concat(i / of * 100, "vw");
 }
 
 async function normaliseImagesFromFiles(images, model, config) {
@@ -27658,6 +27670,159 @@ state.softLight = false;
 state.multiply = false;
 state.overlay = false;
 state.difference = false;
+},{}],"utils/Recording.js":[function(require,module,exports) {
+/*
+*  Copyright (c) 2016 The WebRTC project authors. All Rights Reserved.
+*
+*  Use of this source code is governed by a BSD-style license
+*  that can be found in the LICENSE file in the root of the source
+*  tree.
+*/
+'use strict';
+/* globals main */
+// This code is adapted from
+// https://rawgit.com/Miguelao/demos/master/mediarecorder.html
+
+/* globals main, MediaRecorder */
+// const mediaSource = new MediaSource();
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.Recording = Recording;
+let mediaRecorder;
+let recordedBlobs;
+let sourceBuffer; // const video = document.querySelector('video-recording');
+// const recordButton = document.querySelector('#startButton');
+// const canvas = document.querySelector('#output');
+
+const playButton = document.querySelector('button#play');
+const downloadButton = document.querySelector('button#download'); // recordButton.onclick = toggleRecording;
+// playButton.onclick = play;
+// downloadButton.onclick = download;
+
+function Recording() {
+  this.video = document.querySelector('#video-recording');
+  this.canvas = document.querySelector('#output');
+  this.recordButton = document.querySelector('#startButton');
+  this.stream = this.canvas.captureStream(); // frames per second
+
+  this.mediaSource = new MediaSource();
+  console.log('Started stream capture from canvas element: ', this.canvas);
+  this.mediaSource.addEventListener('sourceopen', this.handleSourceOpen, false);
+
+  this.recordButton.onclick = () => {
+    if (this.recordButton.textContent === 'rec') {
+      this.startRecording();
+    } else {
+      this.stopRecording();
+      this.recordButton.textContent = 'rec'; //  playButton.disabled = false;
+      //  downloadButton.disabled = false;
+    }
+  };
+}
+
+Recording.prototype.handleSourceOpen = function (event) {
+  console.log('MediaSource opened');
+  this.sourceBuffer = this.mediaSource.addSourceBuffer('video/webm; codecs="vp8"');
+  console.log('Source buffer: ', this.sourceBuffer);
+};
+
+Recording.prototype.handleDataAvailable = function (event) {
+  if (event.data && event.data.size > 0) {
+    this.recordedBlobs.push(event.data);
+  }
+};
+
+Recording.prototype.handleStop = function (event) {
+  console.log('Recorder stopped: ', event);
+  this.superBuffer = new Blob(this.recordedBlobs, {
+    type: 'video/webm'
+  });
+  this.video.src = window.URL.createObjectURL(this.superBuffer);
+}; // The nested try blocks will be simplified when Chrome 47 moves to Stable
+
+
+Recording.prototype.startRecording = function () {
+  let options = {
+    mimeType: 'video/webm'
+  };
+  this.recordedBlobs = [];
+
+  try {
+    this.mediaRecorder = new MediaRecorder(this.stream, options);
+  } catch (e0) {
+    console.log('Unable to create MediaRecorder with options Object: ', e0);
+
+    try {
+      options = {
+        mimeType: 'video/webm,codecs=vp9'
+      };
+      this.mediaRecorder = new MediaRecorder(this.stream, options);
+    } catch (e1) {
+      console.log('Unable to create MediaRecorder with options Object: ', e1);
+
+      try {
+        options = 'video/vp8'; // Chrome 47
+
+        this.mediaRecorder = new MediaRecorder(this.stream, options);
+      } catch (e2) {
+        alert('MediaRecorder is not supported by this browser.\n\n' + 'Try Firefox 29 or later, or Chrome 47 or later, ' + 'with Enable experimental Web Platform features enabled from chrome://flags.');
+        console.error('Exception while creating MediaRecorder:', e2);
+        return;
+      }
+    }
+  }
+
+  console.log('Created MediaRecorder', this.mediaRecorder, 'with options', options);
+  this.recordButton.textContent = 'Stop Recording'; //   playButton.disabled = true;
+  //   downloadButton.disabled = true;
+
+  this.mediaRecorder.onstop = event => {
+    console.log('Recorder stopped: ', event);
+    this.superBuffer = new Blob(this.recordedBlobs, {
+      type: 'video/webm'
+    });
+    this.video.src = window.URL.createObjectURL(this.superBuffer);
+  };
+
+  this.mediaRecorder.ondataavailable = event => {
+    if (event.data && event.data.size > 0) {
+      this.recordedBlobs.push(event.data);
+    }
+  };
+
+  this.mediaRecorder.start(100); // collect 100ms of data
+
+  console.log('MediaRecorder started', this.mediaRecorder);
+};
+
+Recording.prototype.stopRecording = function () {
+  this.mediaRecorder.stop();
+  console.log('Recorded Blobs: ', this.recordedBlobs);
+  this.video.controls = true;
+};
+
+Recording.prototype.play = function () {
+  this.video.play();
+};
+
+Recording.prototype.playdownload = function () {
+  const blob = new Blob(this.recordedBlobs, {
+    type: 'video/webm'
+  });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.download = 'test.webm';
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  }, 100);
+};
 },{}],"video.js":[function(require,module,exports) {
 "use strict";
 
@@ -27676,6 +27841,8 @@ var _imagesData = require("./utils/imagesData");
 var _findSimilarVideo = require("./utils/findSimilarVideo");
 
 var _state = require("./config/state");
+
+var _Recording = require("./utils/Recording");
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -27710,6 +27877,10 @@ let globalCtx;
 let ctx;
 let realtimeAnimationFrameRef;
 const canvas = document.getElementById("output");
+const memCanvas = document.createElement('canvas');
+memCanvas.width = canvas.width;
+memCanvas.height = canvas.height;
+const memContext = memCanvas.getContext('2d');
 
 const main = async () => {
   console.time("load model"); // load a global version of the model (TO-DO: is redundant)
@@ -27735,7 +27906,8 @@ const main = async () => {
     noCameraMessage(e);
   }
 
-  console.timeEnd("init video");
+  console.timeEnd("init video"); // const recording = new Recording();
+
   landmarksRealTime(video);
 };
 
@@ -27849,7 +28021,7 @@ async function frameLandmarks() {
   const predictions = await model.estimateHands(video, _state.state.flip);
 
   if (predictions.length > 0) {
-    console.log(predictions[0].boundingBox);
+    getSecondHand(predictions[0].boundingBox);
     const landmarks = predictions[0].landmarks;
     const centroid = (0, _imagesData.getCentroid)(landmarks[0], landmarks[2], landmarks[5], landmarks[17]);
 
@@ -27872,6 +28044,30 @@ async function frameLandmarks() {
 
   stats.end();
   realtimeAnimationFrameRef = requestAnimationFrame(frameLandmarks);
+}
+
+async function getSecondHand(boundingBox) {
+  memContext.drawImage(canvas, 0, 0); // memContext.globalCompositeOperation = 'destination-out';
+
+  memContext.drawImage(memCanvas, boundingBox.topLeft[0], boundingBox.topLeft[1], boundingBox.bottomRight[0] - boundingBox.topLeft[0], boundingBox.bottomRight[1] - boundingBox.topLeft[1]);
+  const predictions = await model.estimateHands(memCanvas, _state.state.flip);
+  if (predictions.length) console.log(predictions); // const landmarks = predictions[0].landmarks;
+  // const centroid = getCentroid(landmarks[0], landmarks[2], landmarks[5], landmarks[17]);
+  // if (state.drawDirection) {
+  // 	drawPoint(ctx, centroid[1], centroid[0], 4);
+  // 	ctx.strokeStyle = "lightgreen";
+  // 	ctx.lineWidth = 3;
+  // 	drawPath(ctx, [predictions[0].landmarks[0], centroid], false);
+  // 	ctx.strokeStyle = "black";
+  // 	ctx.lineWidth = 2;
+  // }
+  // predictions[0].centroid = centroid;
+  // const result = predictions[0].landmarks;
+  // if( state.drawInputPose)
+  // drawKeypoints(ctx, result, predictions[0].annotations);
+  // // overlay hand image
+  // const matchIndex = findSimilar(mapLandmarks(predictions[0].landmarks));
+  // if (state.drawDataPose) await placeImage(ctx, predictions[0], matchIndex, state);
 }
 
 function estimationWorkerMessageHandler(eMsg) {
@@ -27942,5 +28138,5 @@ function confirmAllImages() {
 
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 main();
-},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js","./config/state":"config/state.js"}]},{},["video.js"], null)
+},{"@tensorflow-models/handpose":"node_modules/@tensorflow-models/handpose/dist/handpose.esm.js","@tensorflow/tfjs-core":"node_modules/@tensorflow/tfjs-core/dist/tf-core.esm.js","./utils":"utils/index.js","./utils/drawing.js":"utils/drawing.js","./utils/video.js":"utils/video.js","./utils/imagesData":"utils/imagesData.js","./utils/findSimilarVideo":"utils/findSimilarVideo.js","./config/state":"config/state.js","./utils/Recording":"utils/Recording.js"}]},{},["video.js"], null)
 //# sourceMappingURL=/video.422110ec.js.map

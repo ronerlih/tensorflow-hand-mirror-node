@@ -19,6 +19,10 @@
    <script src="https://storage.googleapis.com/learnjs-data/handtrack_staging/scatter-gl.js"></script>
    <!-- <script src="https://cdn.jsdelivr.net/npm/scatter-gl@0.0.1/lib/scatter-gl.min.js"></script> -->
    <style>:root { overflow-x: hidden;}
+     body {
+        margin:0px;
+        padding:0px;
+     }
      #canvas-wrapper {
        margin: auto ;
        margin-top: 20px;
@@ -36,10 +40,18 @@
      }
      #scatter-gl-container, #scatter-gl-container > * {
        width:auto!important;
+     }
+     #progress-bar {
+        position: relative;
+        width: 10px;
+        height: 5px;
+        background-color: darkseagreen;
+        transition: width 2s;
      }</style>
    <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
    
    <body>
+      <div id="progress-bar"></div>
      <div id="info"> 
        <p>
           <strong>Hand dance sandbox 👋 (rehearsal page)</strong>
@@ -60,6 +72,8 @@
        position: absolute;
        ">
      </video>
+     <button class="btn" id="startButton" style="display:block; margin:100 auto 50 auto; padding:5px; font-size:16px">rec</button>
+     <video id="video-recording" playsinline="" loop=""></video>
      </div>
      <div id="scatter-gl-container"></div>
      <h4>data images poses</h4>
@@ -559,5 +573,24 @@
       </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.6/dat.gui.min.js"></script>
 <script src="/video.422110ec.js"></script>
-   </body>
+   
+<script>// WS
+//    if (navigator.serviceWorker) {
+//    navigator.serviceWorker.register('workers/images-service-worker.js')
+//       .then(( sw => {
+// console.log('registered SW')
+//          console.log(sw)
+//          // sw.active.postMessage(
+//          //    [...document.querySelector('#images')
+//          //       .children]
+//          //       .map( data => data.src.split('http://localhost:1234')[1])
+//          //    );
+//          sw.addEventListener('message', event => {
+//       // event is a MessageEvent object
+//          console.log(`The service worker sent me a message: ${event.data}`);
+//          });
+//       }))
+// }</script>
+
+</body>
    
