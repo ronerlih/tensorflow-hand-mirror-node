@@ -26489,15 +26489,25 @@ Object.defineProperty(exports, "__esModule", {
 exports.setupCamera = setupCamera;
 exports.loadVideo = loadVideo;
 exports.VIDEO_HEIGHT = exports.VIDEO_WIDTH = void 0;
-const VIDEO_WIDTH = 1280;
-exports.VIDEO_WIDTH = VIDEO_WIDTH;
-const VIDEO_HEIGHT = 720; // used in index.js to resize hand
+// export const VIDEO_WIDTH = 3840;
+// export const VIDEO_HEIGHT = 2160; 
 // export const VIDEO_WIDTH = 1024;
 // export const VIDEO_HEIGHT = 576; // used in index.js to resize hand
-// export const VIDEO_WIDTH = 640;
-// export const VIDEO_HEIGHT = 480; // used in index.js to resize hand
-// export const VIDEO_WIDTH = 330;
+// 960 × 540 //(qHD)
+// export const VIDEO_WIDTH = 960;
+// export const VIDEO_HEIGHT = 540; // used in index.js to resize hand
+const VIDEO_WIDTH = 640;
+exports.VIDEO_WIDTH = VIDEO_WIDTH;
+const VIDEO_HEIGHT = 480; // export const VIDEO_WIDTH = 330;
 // export const VIDEO_HEIGHT = 240; // used in index.js to resize hand
+// export const VIDEO_WIDTH = 165;
+// export const VIDEO_HEIGHT = 120; // used in index.js to resize hand
+// constraints 
+// export const VIDEO_WIDTH = { min: 640, ideal: 1920 }
+// export const VIDEO_HEIGHT = { min: 400, ideal: 1080 }
+// mobile
+// export const VIDEO_WIDTH = 480;
+// export const VIDEO_HEIGHT = 640; 
 
 exports.VIDEO_HEIGHT = VIDEO_HEIGHT;
 
@@ -26506,14 +26516,35 @@ async function setupCamera(mobile) {
     throw new Error('Browser API navigator.mediaDevices.getUserMedia not available');
   }
 
-  const video = document.getElementById('video');
+  const video = document.getElementById('video'); // const devices = await navigator.mediaDevices.enumerateDevices();
+  // console.log(navigator.mediaDevices.getSupportedConstraints())
+
+  let constraints = {
+    width: {
+      min: 640,
+      ideal: 1920,
+      max: 1920
+    },
+    height: {
+      min: 400,
+      ideal: 1080
+    },
+    aspectRatio: 1.777777778,
+    frameRate: {
+      max: 60
+    },
+    facingMode: {
+      exact: "user"
+    }
+  };
   const stream = await navigator.mediaDevices.getUserMedia({
-    'audio': false,
+    'audio': true,
     'video': {
-      facingMode: 'user',
+      //  facingMode: 'user',
       // Only setting the video to a specified size in order to accommodate a
       // point cloud, so on mobile devices accept the default size.
       width: mobile ? undefined : VIDEO_WIDTH // height: mobile ? undefined : VIDEO_HEIGHT * 2
+      // aspectRatio: { ideal: 1.7777777778 }
 
     }
   });
